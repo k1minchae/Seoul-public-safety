@@ -4,7 +4,7 @@ API_KEY = "7357784257616c7338316a654e7568"
 import requests
 
 # 장소 정보 들어있는 엑셀 파일
-place = pd.read_excel('./hot-place.xlsx')
+place = pd.read_excel('./data/hot-place.xlsx')
 
 # 장소 코드만 떼오기
 area_cd = place['AREA_CD'].unique()
