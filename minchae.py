@@ -67,12 +67,19 @@ KAKAO_API_KEY = "***REMOVED***"
 
 headers = {"Authorization": f"KakaoAK {KAKAO_API_KEY}"}
 
+# API 테스트
+url = "https://dapi.kakao.com/v2/local/search/keyword.json"
+params = {"query": "강남역"}
+response = requests.get(url, headers=headers, params=params)
+
+print("상태 코드:", response.status_code)
+print("응답 내용:", response.json())
+
+
 # 주소 가져오는 API
 def get_address(keyword):
     url = "https://dapi.kakao.com/v2/local/search/keyword.json"
     params = {"query": keyword}
-    headers = {"Authorization": f"KakaoAK {KAKAO_API_KEY}"}
-
     response = requests.get(url, headers=headers, params=params)
     
     print(f"[{keyword}] 응답 코드: {response.status_code}")
@@ -90,15 +97,6 @@ def get_address(keyword):
                 return gu, dong
     return None, None
 
-headers = {"Authorization": f"KakaoAK {KAKAO_API_KEY}"}
-
-url = "https://dapi.kakao.com/v2/local/search/keyword.json"
-params = {"query": "강남역"}
-response = requests.get(url, headers=headers, params=params)
-
-print("상태 코드:", response.status_code)
-print("응답 내용:", response.json())
-
 
 # 중복 요청 방지: unique 지역만 처리
 place_list = df['지역'].unique()
@@ -112,3 +110,11 @@ for place in place_list:
 # 맵핑하여 df에 적용
 df['구'] = df['지역'].map(lambda x: place_to_address[x]['구'])
 df['동'] = df['지역'].map(lambda x: place_to_address[x]['동'])
+
+
+# 검색 안 된 결과들
+keywords = df.loc[df['구'].isna(), '지역'].str.split().str[0]
+for place in keywords:
+    gu, dong = get_address(place)
+    place_to_address[place] = {'구': gu, '동': dong}
+    time.sleep(0.3)  # 카카오 API rate limit 보호용
