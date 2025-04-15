@@ -1,3 +1,4 @@
+# 유동인구 데이터 불러오는 파일
 import pandas as pd
 import numpy as np
 import requests
