@@ -77,44 +77,49 @@ print("응답 내용:", response.json())
 
 
 # 주소 가져오는 API
+# 주소 가져오는 함수 (재검색 포함)
 def get_address(keyword):
     url = "https://dapi.kakao.com/v2/local/search/keyword.json"
-    params = {"query": keyword}
-    response = requests.get(url, headers=headers, params=params)
     
-    print(f"[{keyword}] 응답 코드: {response.status_code}")
-    print(response.json())  # 실제 API 응답 내용 확인
+    for attempt in [keyword, keyword.split()[0]]:  # 재검색 포함
+        print(f"[{attempt}] 주소 검색 시도 중...")
+        params = {"query": attempt}
+        response = requests.get(url, headers=headers, params=params)
 
-    if response.status_code == 200:
-        documents = response.json().get('documents')
-        if documents:
-            address_name = documents[0].get('address_name')
-            print(f"→ address_name: {address_name}")
-            if address_name:
-                parts = address_name.split()
-                gu = parts[1] if len(parts) > 1 else None
-                dong = parts[2] if len(parts) > 2 else None
-                return gu, dong
+        if response.status_code == 200:
+            documents = response.json().get('documents')
+            if documents:
+                address_name = documents[0].get('address_name')
+                print(f"→ address_name: {address_name}")
+                if address_name:
+                    parts = address_name.split()
+                    gu = parts[1] if len(parts) > 1 else None
+                    dong = parts[2] if len(parts) > 2 else None
+                    return gu, dong
+        else:
+            print(f"응답 실패: {response.status_code}")
+    
     return None, None
 
-
-# 중복 요청 방지: unique 지역만 처리
-place_list = df['지역'].unique()
+# 중복 요청 방지용 캐시
 place_to_address = {}
 
+# 지역 이름 목록
+place_list = df['지역'].unique()
+
+# 주소 요청 및 저장
 for place in place_list:
     gu, dong = get_address(place)
     place_to_address[place] = {'구': gu, '동': dong}
-    time.sleep(0.3)  # 카카오 API rate limit 보호용
+    time.sleep(0.3)
 
-# 맵핑하여 df에 적용
+# 최종 맵핑 적용
 df['구'] = df['지역'].map(lambda x: place_to_address[x]['구'])
 df['동'] = df['지역'].map(lambda x: place_to_address[x]['동'])
 
+# 그래도 결과가 없는 1개는 수동으로 지정
+df.loc[df['구'].isna(), '구'] = '중구'
+df.loc[df['동'].isna(), '동'] = '정동'
 
-# 검색 안 된 결과들
-keywords = df.loc[df['구'].isna(), '지역'].str.split().str[0]
-for place in keywords:
-    gu, dong = get_address(place)
-    place_to_address[place] = {'구': gu, '동': dong}
-    time.sleep(0.3)  # 카카오 API rate limit 보호용
+# csv 파일로 저장
+df.to_csv("./data/peopledata.csv", encoding='utf-8')
