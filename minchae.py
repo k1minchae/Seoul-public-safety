@@ -1,7 +1,12 @@
 import pandas as pd
 import numpy as np
 import requests
-API_KEY = "***REMOVED***"
+from dotenv import load_dotenv
+import os
+
+# env 파일 로드
+load_dotenv()
+API_KEY = os.getenv("API_KEY")
 
 # 장소 정보 들어있는 엑셀 파일
 place = pd.read_excel('./data/hot-place.xlsx')
@@ -63,7 +68,7 @@ df.to_csv("./data/peopledata.csv", encoding='utf-8')
 
 # 카카오 API KEY
 import time
-KAKAO_API_KEY = "***REMOVED***"
+KAKAO_API_KEY = os.getenv("KAKAO_API_KEY")
 
 headers = {"Authorization": f"KakaoAK {KAKAO_API_KEY}"}
 
