@@ -13,4 +13,3 @@
 [data/Seoul_Safetybell.xlsx]: 서울시 안전벨 수 (구별)
 [data/Seoul_SafetyCener_info.xlsx]: 서울시 치안 센터 수 (구별)
 [sulzip.xlsx]: 서울시 술판매 일반음식점 (구별)
- 
