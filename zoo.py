@@ -167,6 +167,7 @@ def assign_group(gu):
         return np.nan  
 
 merged_df['클러스터'] = merged_df['자치구'].apply(assign_group)
+merged_df['클러스터'] = merged_df['클러스터'].astype(str)
 
 
 # 정규성 검정: 시각화 (Q-Q Plot)
@@ -251,17 +252,6 @@ else:
     print("세 그룹 간에 범죄건수에 유의한 차이가 없다.")
 
 
-# 사후 검정 수행
-import scikit_posthocs as sp
-
-posthoc = sp.posthoc_dunn(merged_df,
-                          val_col='총범죄건수',
-                          group_col='클러스터', 
-                          p_adjust='bonferroni')
-
-print("\nDunn's test 사후검정 결과:")
-print(posthoc)
-
 # Boxplot
 plt.rc('font', family='Malgun Gothic')
 
@@ -274,7 +264,58 @@ plt.legend(title='클러스터')
 plt.ylabel('총 범죄건 수')
 
 
+# 사후 검정 수행
+import scikit_posthocs as sp
 
+posthoc = sp.posthoc_dunn(merged_df,
+                          val_col='총범죄건수',
+                          group_col='클러스터', 
+                          p_adjust='bonferroni')
+
+print("\nDunn's test 사후검정 결과:")
+print(posthoc)
+
+
+
+##### 그룹별 시각화
+import pandas as pd
+import plotly.express as px
+import json
+
+# 데이터프레임 예시: merged_df에 '자치구', '클러스터', '총범죄건수'가 포함되어 있어야 함
+# GeoJSON 파일 불러오기
+with open('./data/seoul_districts.geojson', encoding='utf-8') as f:
+    geojson_data = json.load(f)
+
+
+custom_colors = px.colors.qualitative.Set3 
+
+
+# Choropleth Mapbox 시각화
+fig = px.choropleth_mapbox(
+    merged_df,
+    geojson=geojson_data,
+    locations='자치구',                        # 지역 기준
+    featureidkey='properties.SIG_KOR_NM',     # GeoJSON의 자치구 이름 키
+    color='클러스터',                          # 클러스터별 색상 분리
+    color_discrete_sequence=custom_colors,   # 색상 변경
+    hover_name='자치구',
+    hover_data={'총범죄건수': True, '클러스터': True},
+    mapbox_style='carto-positron',
+    center={'lat': 37.5665, 'lon': 126.9780},
+    zoom=10,
+    opacity=0.7,
+    title='서울시 자치구별 클러스터 및 총범죄건수 시각화'
+)
+
+# 지도 크기 및 여백 조정
+fig.update_layout(
+    margin={"r": 0, "t": 30, "l": 0, "b": 0},
+    height=700,
+    width=800
+)
+
+fig.show()
 
 
 
