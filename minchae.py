@@ -73,9 +73,139 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import silhouette_score
-from sklearn.decomposition import PCA
 
 
 crime_df = pd.read_csv('./data/crime_rate.csv', encoding="cp949", sep='\t')
 adult_df = pd.read_csv('./data/머지한유흥업소데이터.csv', encoding='utf-8')
+merged_df = pd.merge(crime_df, adult_df, on='자치구', how='inner')
+print(merged_df.head())
+
+
+cluster_features = ['구별 경찰수', '유흥업소_개수', '총생활인구수']
+
+# 전처리 + 스케일링
+X = merged_df[cluster_features].copy()
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+
+# 클러스터링 (KMeans)
+kmeans = KMeans(n_clusters=2, random_state=42)
+merged_df['클러스터'] = kmeans.fit_predict(X_scaled)
+
+plt.figure(figsize=(12, 6))
+sns.scatterplot(data=merged_df, x='범죄율', y='유흥업소_개수', hue='클러스터', style='자치구')
+plt.title('자치구 치안 클러스터링')
+plt.show()
+
+
+merged_df.groupby('클러스터')['총범죄건수'].mean()
+merged_df.groupby('클러스터')['총생활인구수'].mean()
+first = merged_df.loc[merged_df['클러스터'] == 0, :]
+second = merged_df.loc[merged_df['클러스터'] == 1, :]
+first['자치구'].unique()
+second['자치구'].unique()
+
+
+# 정규성 검정: 시각화 (Q-Q Plot)
+import statsmodels.api as sm
+# 클러스터 0
+sm.qqplot(first['총범죄건수'], line='s')
+plt.title('Q-Q Plot: 그룹 1')
+plt.grid(True)
+plt.show()
+
+# 클러스터 1
+sm.qqplot(second['총범죄건수'], line='s')
+plt.title('Q-Q Plot: 그룹 2')
+plt.grid(True)
+plt.show()
+
+
+# 정규성 검정 (Shapiro-Wilk Test)
+from scipy.stats import shapiro
+stat0, p0 = shapiro(first['총범죄건수'])
+stat1, p1 = shapiro(second['총범죄건수'])
+print(f'클러스터 0 정규성 p값: {p0:.4f}')
+print(f'클러스터 1 정규성 p값: {p1:.4f}')
+
+
+
+# 비모수검정
+from scipy.stats import mannwhitneyu
+
+u_stat, p_val = mannwhitneyu(first['총범죄건수'], second['총범죄건수'], alternative='two-sided')
+print(f'Mann-Whitney U 검정 통계량: {u_stat:.4f}')
+print(f'p-value: {p_val:.4f}')
+# 0.05보다 작으므로 귀무가설 기각
+# 두 집단은 다르다.
+
+
+# 클러스터링 결과를 시각화
+plt.figure(figsize=(7, 5))
+
+# boxplot 그리기
+sns.boxplot(data=merged_df, x='클러스터', y='총범죄건수', palette='pastel')
+
+# 그래프 설정
+plt.title('클러스터별 총범죄건수 분포 (Boxplot)')
+plt.xticks([0, 1], ['그룹 1', '그룹 2'])
+plt.ylabel('총범죄건수')
+plt.text(1, 14500 , f'↑강남구', ha='center', va='bottom', fontsize=17, color='red')
+plt.grid(True)
+plt.tight_layout()
+
+# 출력
+plt.show()
+second.loc[second['총범죄건수'] >= 16000, :]    # 강남구: 이상치
+
+
+# 인구수 평균차이검정
+# 정규성 검정: 시각화 (Q-Q Plot)
+import statsmodels.api as sm
+# 클러스터 0
+sm.qqplot(first['총생활인구수'], line='s')
+plt.title('Q-Q Plot: 그룹 1')
+plt.grid(True)
+plt.show()
+
+# 클러스터 1
+sm.qqplot(second['총생활인구수'], line='s')
+plt.title('Q-Q Plot: 그룹 2')
+plt.grid(True)
+plt.show()
+
+
+# 정규성 검정 (Shapiro-Wilk Test)
+from scipy.stats import shapiro
+stat0, p0 = shapiro(first['총생활인구수'])
+stat1, p1 = shapiro(second['총생활인구수'])
+print(f'클러스터 0 정규성 p값: {p0:.4f}')
+print(f'클러스터 1 정규성 p값: {p1:.4f}')
+
+
+# 비모수검정
+from scipy.stats import mannwhitneyu
+
+u_stat, p_val = mannwhitneyu(first['총생활인구수'], second['총생활인구수'], alternative='two-sided')
+print(f'Mann-Whitney U 검정 통계량: {u_stat:.4f}')
+print(f'p-value: {p_val:.4f}')
+# 0.05보다 작으므로 귀무가설 기각
+# 두 집단은 다르다.
+
+
+# 클러스터링 결과를 시각화
+plt.figure(figsize=(7, 5))
+
+# boxplot 그리기
+sns.boxplot(data=merged_df, x='클러스터', y='총생활인구수', palette='pastel')
+
+# 그래프 설정
+plt.title('클러스터별 총생활인구수 분포 (Boxplot)')
+plt.xticks([0, 1], ['그룹 1', '그룹 2'])
+plt.ylabel('총생활인구수')
+plt.grid(True)
+plt.tight_layout()
+
+# 출력
+plt.show()
