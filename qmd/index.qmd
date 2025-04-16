@@ -11,10 +11,12 @@ format:
     # logo: logo.png
     css: styles.css
     title-slide-attributes: 
-      # data-background-image: "assets/title-bg.gif"
+      data-background-image: "img/title.png"
       data-background-size: cover
     slide-attributes:
       # data-background-image: "assets/bg.png"
       data-background-size: cover
 jupyter: python3
 ---
+
+## 
