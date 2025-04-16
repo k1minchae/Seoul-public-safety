@@ -122,3 +122,5 @@ plt.xticks(rotation=45)
 plt.ylabel('범죄율 (10,000명당)')
 plt.title('자치구별 범죄율')
 
+# 파일로 변환
+crime_df.to_csv('./data/crime_rate.csv', index=False, encoding='utf-8-sig')

@@ -1,0 +1,22 @@
+---
+title: "제목입니다."
+subtitle: "부제목입니다."
+author: "2조"
+format: 
+  revealjs:
+    highlight-style: gruvbox
+    incremental: true  
+    code-line-numbers: true
+    language: ko
+    # logo: logo.png
+    css: styles.css
+    title-slide-attributes: 
+      data-background-image: "img/title.png"
+      data-background-size: cover
+    slide-attributes:
+      # data-background-image: "assets/bg.png"
+      data-background-size: cover
+jupyter: python3
+---
+
+## 
