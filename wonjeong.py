@@ -279,3 +279,48 @@ plt.grid(True)
 plt.tight_layout()
 plt.show()
 
+#####################################################
+
+#필요한 라이브러리 부르기
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.linear_model import LinearRegression
+import statsmodels.api as sm
+
+food_and_entertain = pd.read_csv('./data/머지한유흥업소데이터.csv', encoding='utf-8')
+seoul_safetybell = pd.read_excel('./data/Seoul_Safetybell.xlsx', engine='openpyxl')
+cctv = pd.read_csv('./data/Seoul_CCTV_info.csv',encoding='cp949')
+crime_rate = pd.read_csv('./data/crime_rate.csv',encoding='euc-kr',sep='\t')
+
+seoul_safetybell_df = seoul_safetybell.groupby('자치구')['번호'].count()
+cctv_df = cctv.groupby('자치구')['CCTV 수량'].sum()
+
+df = food_and_entertain.merge(seoul_safetybell_df, on='자치구') \
+                       .merge(cctv_df, on='자치구') \
+                       .merge(crime_rate, on='자치구')
+df = df.rename(columns={'번호': '안전벨 개수'})
+df = df.drop(columns=['Unnamed: 8'])
+
+
+#자치구별 음식점 수(일반음식점 + 유흥업소 포함)가 범죄율에 미치는 영향
+X = df[['총_개수']]
+y = df['범죄율']
+X = sm.add_constant(X)
+model = sm.OLS(y, X).fit()
+print(model.summary())
+
+#자치구별 cctv수가 범죄율에 미치는 영향
+X = df[['CCTV 수량']]
+y = df['범죄율']
+X = sm.add_constant(X)
+model = sm.OLS(y, X).fit()
+print(model.summary())
+
+#자치구별 안전벨수가가 범죄율에 미치는 영향
+X = df[['안전벨 개수']]
+y = df['범죄율']
+X = sm.add_constant(X)
+model = sm.OLS(y, X).fit()
+print(model.summary())
