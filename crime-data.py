@@ -56,17 +56,17 @@ plt.show()
 # 서울시 내국인 인구 데이터
 population_kor = pd.read_csv('./data/LOCAL_PEOPLE_GU_2024.csv', encoding='cp949')
 population_kor = population_kor.rename(columns={'adstrd_code_se': '자치구코드', 'tot_lvpop_co': '총생활인구수(내)'})
-population_kor = population_kor.loc[population_kor['stdr_de_id'] == 20240101, :]
+population_kor = population_kor.loc[(population_kor['stdr_de_id'] == 20240101) & (population_kor['tmzon_pd_se'] == 0), :]
 
 # 서울시 외국인 인구 데이터
 population_for = pd.read_csv('./data/LONG_FOREIGNER_GU_2023.csv', encoding='cp949')
 population_for = population_for.rename(columns={'총생활인구수': '총생활인구수(외)'})
-population_for = population_for.loc[population_for['기준일ID'] == 20231231, :]
-
+population_for = population_for.loc[(population_for['기준일ID'] == 20231231) & (population_for['시간대구분'] == 0), :]
 
 # 총 인구수만 추출
 kor = population_kor.loc[:, ['자치구코드', '총생활인구수(내)']]
 for_ = population_for.loc[:, ['자치구코드', '총생활인구수(외)']]
+
 
 # 자치구코드 기준으로 병합
 population = pd.merge(kor, for_, on='자치구코드', how='inner')
