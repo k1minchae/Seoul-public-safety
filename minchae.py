@@ -60,3 +60,22 @@ def 분류_시간대(hour):
 
 df_night['시간대'] = df_night['시간'].apply(분류_시간대)
 df_night['지역'].unique().size
+
+
+
+############################################################
+# 클러스터링 (?) 할수있을까
+# 클러스터링 해보기
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import silhouette_score
+from sklearn.decomposition import PCA
+
+
+crime_df = pd.read_csv('./data/crime_rate.csv', encoding="cp949", sep='\t')
+adult_df = pd.read_csv('./data/머지한유흥업소데이터.csv', encoding='utf-8')
