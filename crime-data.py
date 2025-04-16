@@ -72,4 +72,53 @@ for_ = population_for.loc[:, ['자치구코드', '총생활인구수(외)']]
 population = pd.merge(kor, for_, on='자치구코드', how='inner')
 population['총생활인구수'] = population['총생활인구수(내)'] + population['총생활인구수(외)']
 
+# 자치구코드 -> 자치구명 변환
+area_cd = {
+    11110: '종로구',
+    11140: '중구',
+    11170: '용산구',
+    11200: '성동구',
+    11215: '광진구',
+    11230: '동대문구',
+    11260: '중랑구',
+    11290: '성북구',
+    11305: '강북구',
+    11320: '도봉구',
+    11350: '노원구',
+    11380: '은평구',
+    11410: '서대문구',
+    11440: '마포구',
+    11470: '양천구',
+    11500: '강서구',
+    11530: '구로구',
+    11545: '금천구',
+    11560: '영등포구',
+    11590: '동작구',
+    11620: '관악구',
+    11650: '서초구',
+    11680: '강남구',
+    11710: '송파구',
+    11740: '강동구'
+}
+population['자치구'] = population['자치구코드'].map(area_cd)
+
 # 범죄율 계산
+population['범죄율'] = (df_melted.groupby('자치구')['발생건수'].sum() / population['총생활인구수']) * 10000
+
+# 필요한 데이터만 추출
+crime_df = df_melted.groupby('자치구')['발생건수'].sum().reset_index()
+crime_df.columns = ['자치구', '총범죄건수']
+
+# 범죄율 데이터와 인구수 데이터 병합
+crime_df = pd.merge(crime_df, population, on='자치구', how='inner')
+
+# 범죄율 계산
+crime_df['범죄율'] = (crime_df['총범죄건수'] / crime_df['총생활인구수']) * 10000
+
+# 범죄율 시각화
+plt.figure(figsize=(12, 6))
+plt.bar(crime_df['자치구'], crime_df['범죄율'], color='salmon')
+plt.xticks(rotation=45)
+plt.ylabel('범죄율 (10,000명당)')
+plt.title('자치구별 범죄율')
+
