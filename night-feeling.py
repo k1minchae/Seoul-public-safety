@@ -16,6 +16,15 @@ one_housed = pd.read_excel('./data/seoul_one_person_housed_updated.xlsx')
 SeoulSafetyCenter = pd.read_excel('./data/Seoul_SafetyCener_info.xlsx')
 
 
+
+cctv = pd.read_csv('./data/Seoul_CCTV_info.csv', encoding='cp949')
+cctv_by_gu = cctv.groupby('자치구')['CCTV 수량'].sum().reset_index()
+cctv_by_gu.columns = ['자치구', 'CCTV 총수량']
+# 결과 출력
+print(cctv_by_gu)
+
+
+
 # [data/hot-place.xlsx]: 유동 인구 (서울시 주요 장소별)
 # [data/seoul_one _person_housed_updated.xlsx]: 서울시 1인 가구 수 (구별)
 # [data/Seoul_SafetyCener_info.xlsx]: 서울시 치안 센터 수 (구별)
@@ -66,16 +75,34 @@ station_counts.columns = ['자치구', '파출소수']
 #  병합
 merged_df = split_data.merge(one_housed_clean, on='자치구', how='left')
 merged_df = merged_df.merge(station_counts, on='자치구', how='left')
+merged_df = merged_df.merge(cctv_by_gu, on='자치구', how='left')
+
 
 # 결측치 확인 후 처리 (예: 없는 경우 0으로 대체)
 merged_df.fillna(0, inplace=True)
 
 # 독립 변수(X)와 종속 변수(y) 지정
-X = merged_df[['총생활인구수(내)', '총생활인구수(외)', '총범죄건수', '1인가구수', '파출소수','구별 경찰수']]
+X = merged_df[['총생활인구수(내)', '총생활인구수(외)', '총범죄건수', '1인가구수', '파출소수','CCTV 총수량']]
 y = merged_df['범죄율']
 
 X = sm.add_constant(X)
 model = sm.OLS(y, X).fit()
 
-
 print(model.summary())
+
+
+
+
+import statsmodels.api as sm
+
+# X에 유의미한 변수만 선택
+X_sig = merged_df['CCTV 총수량']
+y = merged_df['범죄율']
+X_sig = sm.add_constant(X_sig)
+model_sig = sm.OLS(y, X_sig).fit()
+# 결과 요약 출력
+print(model_sig.summary())
+
+
+
+merged_df.columns
