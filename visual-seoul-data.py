@@ -71,6 +71,35 @@ fig.update_layout(
 fig.show()
 
 
+
+# 정규성 검정 (Shapiro-Wilk Test)
+from scipy.stats import shapiro
+stat0, p0 = shapiro(master['총생활인구수'])
+stat1, p1 = shapiro(master['1인가구수'])
+print(f'클러스터 0 정규성 p값: {p0:.4f}')
+print(f'클러스터 1 정규성 p값: {p1:.4f}')
+
+# 클러스터 0 정규성 p값: 0.5738
+# 클러스터 1 정규성 p값: 0.0046
+
+# 비모수 검정 실시
+# 
+# 비모수 2검정
+from scipy.stats import mannwhitneyu
+# H0: 총 인구수와 1인 가구수의 중앙값이 같다.
+# HA: 총 인구수와 1인 가구수의 중앙값이 다르다.
+
+u_stat, p_val = mannwhitneyu(master['총생활인구수'], master['1인가구수'], alternative='two-sided')
+print(f'Mann-Whitney U 검정 통계량: {u_stat:.4f}')
+print(f'p-value: {p_val:.4f}')
+# Mann-Whitney U 검정 통계량: 576.0000
+# p-value: 0.0000
+# 0.05보다 작으므로 귀무가설 기각
+# HA: 총 인구수와 1인 가구수의 중앙값이 다르다.
+
+
+
+
 # 치안 데이터
 # CCTV 수 지도 시각화
 cctv = pd.read_csv('./data/Seoul_CCTV_info.csv',encoding='cp949')
@@ -134,6 +163,49 @@ fig.update_layout(
 fig.show()
 
 
+# CCTV, 안심벨 상관관계
+master.select_dtypes('number').corr()['CCTV총수량']['안전벨 수']
+# 0.303161
+# 생각보다 강한 상관관게를 보이지 않는다. 
+
+
+# 정규성 검정 (Shapiro-Wilk Test)
+from scipy.stats import shapiro
+stat0, p0 = shapiro(master['CCTV총수량'])
+stat1, p1 = shapiro(master['안전벨 수'])
+print(f'클러스터 0 정규성 p값: {p0:.4f}')
+print(f'클러스터 1 정규성 p값: {p1:.4f}')
+
+# 클러스터 0 정규성 p값: 0.1179
+# 클러스터 1 정규성 p값: 0.1461
+# 구별 CCTV 수는 정규성을 따른다. 
+# 구별 안심벨 수는 정규성을 따른다. 
+
+# 둘의 평균이 같은지 보기위해 
+# 2표본 t검정 실시.
+
+from scipy.stats import ttest_ind
+t_stat, p_value = ttest_ind(master['CCTV총수량'], master['안전벨 수'], 
+                            equal_var=False)
+t_stat, p_value
+# (np.float64(9.589582094604252), np.float64(1.328225513688499e-10))
+
+
+# 비모수 2검정
+from scipy.stats import mannwhitneyu
+# H0: 총 인구수와 1인 가구수의 중앙값이 같다.
+# HA: 총 인구수와 1인 가구수의 중앙값이 다르다.
+
+u_stat, p_val = mannwhitneyu(master['CCTV총수량'], master['안전벨 수'], alternative='two-sided')
+print(f'Mann-Whitney U 검정 통계량: {u_stat:.4f}')
+print(f'p-value: {p_val:.4f}')
+# Mann-Whitney U 검정 통계량: 567.0000
+# p-value: 0.0000
+# 0.05보다 작으므로 귀무가설 기각
+# HA: 총 인구수와 1인 가구수의 중앙값이 다르다.
+
+
+
 
 # 치안 센터 수 지도 시각화
 master = pd.read_excel('./data/sanggwan_df.xlsx')
@@ -163,6 +235,10 @@ fig.update_layout(
 )
 
 fig.show()
+# 종로구가 20개로 가장 많다. 
+# 다음으로 중구가 15개
+# 다음으로 강남구가 14개
+
 
 # 경찰관수 지도 시각화
 master = pd.read_excel('./data/sanggwan_df.xlsx')
@@ -192,6 +268,40 @@ fig.update_layout(
 )
 
 fig.show()
+
+# 강남구가 1542명으로 가장많다. 총생활인구수가 2위 여서 많은 인력이 있는것 같다.
+
+
+
+
+
+# 치안센터 수, 경찰관 수 상관관계
+master.select_dtypes('number').corr()['치안센터수']['구별 경찰수']
+# 0.65004
+# 역시나 강한 상관관게를 보인다. 다른 변수들과 비교했을 때 가장 높은 상관관계
+
+# 치안센터 수, 술집 수 상관관계
+master.select_dtypes('number').corr()['치안센터수']['술집 수']
+# 0.54607
+# 다른 변수들과 비교했을 때 두번째로 높은 상관관계
+# 치안을 위해 술집 수가 많을 수록 치안센터를 늘리는 경향이 있음.
+
+
+# 비모수 2검정
+from scipy.stats import mannwhitneyu
+# H0: 구별 치안센터수와  경찰수 중앙값이 같다.
+# HA: 구별 치안센터수와  경찰수 중앙값이 다르다.
+
+u_stat, p_val = mannwhitneyu(master['치안센터수'], master['구별 경찰수'], alternative='two-sided')
+print(f'Mann-Whitney U 검정 통계량: {u_stat:.4f}')
+print(f'p-value: {p_val:.4f}')
+# Mann-Whitney U 검정 통계량: np.float64(0.0)
+# p-value: 0.0000
+# 0.05보다 작으므로 귀무가설 기각
+# HA: 구별 치안센터 수와 경찰관 수의 중앙값이 다르다.
+
+
+
 
 
 
@@ -225,8 +335,11 @@ fig.update_layout(
 
 fig.show()
 
-
+master.sort_values('술집 수',ascending=True)
+# 강남구: 12700, 마포구: 8258, 서초구: 5563개 순으로 술집 수가 많다.
+# 양천구: 3094, 금천구: 3179, 동작구: 3276 (동작구에 국립현충원이 있다.  유흥시설을 지을 수 없다.)
 # 
+
 
 
 # 범죄 데이터
@@ -258,6 +371,34 @@ fig.update_layout(
 )
 
 fig.show()
+
+
+
+# 술집 수, 총범죄건수 상관관계
+master.select_dtypes('number').corr()['술집 수']['총범죄건수']
+# 0.83537
+# 역시나 아주 강한 상관관게를 보인다. 
+# 다른 변수들과 비교했을 때 가장 높은 상관관계
+
+
+
+
+# 비모수 2검정
+from scipy.stats import mannwhitneyu
+# H0: 구별 치안센터수와  경찰수 중앙값이 같다.
+# HA: 구별 치안센터수와  경찰수 중앙값이 다르다.
+
+u_stat, p_val = mannwhitneyu(master['술집 수'], master['총범죄건수'], alternative='two-sided')
+print(f'Mann-Whitney U 검정 통계량: {u_stat:.4f}')
+print(f'p-value: {p_val:.4f}')
+# Mann-Whitney U 검정 통계량: 123.0000
+# p-value: 0.0007
+# 0.05보다 작으므로 귀무가설 기각
+# HA: 구별 치안센터 수와 경찰관 수의 중앙값이 다르다.
+
+
+
+
 
 
 
