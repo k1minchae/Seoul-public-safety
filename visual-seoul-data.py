@@ -44,6 +44,18 @@ master.sort_values(by='총생활인구수',ascending=False)
 # 1위 송파구: 753278 , 2위 강남구: 633521, 3위 강서구: 533814
 
 
+print(master.sort_values(ascending=False, by="총생활인구수").loc[:, ['자치구', '총생활인구수']].head(3))
+print(master.sort_values(ascending=False, by="1인가구수").loc[:, ['자치구', '1인가구수']].head(3))
+print(master.sort_values(ascending=False, by="1인가구수").head(3))['자치구']
+
+########
+master.sort_values(by='총생활인구수',ascending=False)
+# 1위 송파구: 753278 , 2위 강남구: 633521, 3위 강서구: 533814
+
+
+print(master.sort_values(ascending=False, by="총생활인구수").loc[:, ['자치구', '총생활인구수']].head(3))
+print(master.sort_values(ascending=False, by="1인가구수").loc[:, ['자치구', '1인가구수']].head(3))
+print(master.sort_values(ascending=False, by="1인가구수").head(3))['자치구']
 
 
 # 1인 가구 수 지도 시각화
@@ -116,6 +128,7 @@ cctv = pd.read_csv('./data/Seoul_CCTV_info.csv',encoding='cp949')
 
 
 gu_counts = cctv['자치구'].value_counts().reset_index()
+top_3 = cctv['자치구'].value_counts().sort_values(ascending=False).head(3)
 gu_counts.columns = ['SIG_KOR_NM', '건수']
 
 # 시각화
@@ -363,7 +376,8 @@ fig.update_layout(
 
 fig.show()
 
-master.sort_values('술집 수',ascending=True)
+top_3 = master.sort_values('술집 수',ascending=True).loc[:, ['자치구', '술집 수']].head(3)
+print(top_3)
 # 강남구: 12700, 마포구: 8258, 서초구: 5563개 순으로 술집 수가 많다.
 # 양천구: 3094, 금천구: 3179, 동작구: 3276 (동작구에 국립현충원이 있다.  유흥시설을 지을 수 없다.)
 # 
@@ -400,7 +414,8 @@ fig.update_layout(
 
 fig.show()
 
-
+top_3 = master.sort_values('총범죄건수',ascending=True).loc[:, ['자치구', '술집 수']].head(3)
+print(top_3)
 
 # 술집 수, 총범죄건수 상관관계
 master.select_dtypes('number').corr()['술집 수']['총범죄건수']

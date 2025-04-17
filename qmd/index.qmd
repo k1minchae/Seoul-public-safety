@@ -104,11 +104,15 @@ fig = px.choropleth_mapbox(
 # 레이아웃 조정
 fig.update_layout(
     margin={"r": 0, "t": 30, "l": 0, "b": 0},
-    height=500,
+    height=400,
     width=500
 )
 
 fig.show()
+
+print("TOP 3")
+print(master.sort_values(ascending=False, by="총생활인구수").loc[:, ['자치구', '총생활인구수']].head(3))
+
 
 ```
 
@@ -143,11 +147,16 @@ fig = px.choropleth_mapbox(
 # 레이아웃 조정
 fig.update_layout(
     margin={"r": 0, "t": 30, "l": 0, "b": 0},
-    height=500,
+    height=400,
     width=500
 )
 
 fig.show()
+
+print("TOP 3")
+print(master.sort_values(ascending=False, by="1인가구수").loc[:, ['자치구', '1인가구수']].head(3))
+
+
 
 ```
 
@@ -186,6 +195,7 @@ cctv = pd.read_csv('../data/Seoul_CCTV_info.csv',encoding='cp949')
 
 
 gu_counts = cctv['자치구'].value_counts().reset_index()
+top_3 = cctv['자치구'].value_counts().sort_values(ascending=False).head(3)
 gu_counts.columns = ['SIG_KOR_NM', '건수']
 
 # 시각화
@@ -204,11 +214,13 @@ fig = px.choropleth_mapbox(
 )
 fig.update_layout(
     margin={"r":0, "t":30, "l":0, "b":0},
-    height=500,
+    height=300,
     width=500
 )
 
 fig.show()
+
+print(top_3)
 
 ```
 
@@ -229,6 +241,7 @@ bell['자치구'].value_counts()
 
 
 gu_counts = bell['자치구'].value_counts().reset_index()
+top_3 = bell['자치구'].value_counts().sort_values(ascending=False).head(3)
 gu_counts.columns = ['SIG_KOR_NM', '건수']
 
 # 시각화
@@ -247,12 +260,13 @@ fig = px.choropleth_mapbox(
 )
 fig.update_layout(
     margin={"r":0, "t":30, "l":0, "b":0},
-    height=500,
+    height=300,
     width=500
 )
 
 fig.show()
 
+print(top_3)
 
 ```
 
@@ -260,6 +274,21 @@ fig.show()
 :::
 
 ::::
+
+```{python}
+#|eval: true
+#|echo: false
+corr = master.select_dtypes('number').corr()['CCTV총수량']['안전벨 수']
+
+print("")
+print(f"안전벨과 CCTV의 상관관계: {corr:.4f}")
+from scipy.stats import mannwhitneyu
+# H0: 총 인구수와 1인 가구수의 중앙값이 같다.
+# HA: 총 인구수와 1인 가구수의 중앙값이 다르다.
+
+print("예상과 달리, CCTV와 안전벨의 상관관계가 높지 않다.")
+
+```
 
 
 
@@ -299,7 +328,7 @@ fig = px.choropleth_mapbox(
 # 레이아웃 조정
 fig.update_layout(
     margin={"r": 0, "t": 30, "l": 0, "b": 0},
-    height=500,
+    height=350,
     width=500
 )
 
@@ -340,7 +369,7 @@ fig = px.choropleth_mapbox(
 # 레이아웃 조정
 fig.update_layout(
     margin={"r": 0, "t": 30, "l": 0, "b": 0},
-    height=500,
+    height=350,
     width=500
 )
 
@@ -354,7 +383,19 @@ fig.show()
 ::::
 
 
+```{python}
+#|echo: false
+#|eval: true
 
+# 치안센터 수, 경찰관 수 상관관계
+corr_2 = master.select_dtypes('number').corr()['치안센터수']['구별 경찰수']
+print("")
+print(f"치안센터와 경찰관 수의 상관관계: {corr_2:.4f}")
+print("다른 변수들과 비교했을 때 가장 높은 상관관계를 보임")
+# 0.65004
+# 역시나 강한 상관관게를 보인다. 다른 변수들과 비교했을 때 가장 높은 상관관계
+
+```
 
 
 
@@ -404,6 +445,10 @@ fig.update_layout(
 )
 
 fig.show()
+
+top_3 = master.sort_values('술집 수',ascending=True).loc[:, ['자치구', '술집 수']].head(3)
+print(top_3)
+
 ```
 
 :::
@@ -443,6 +488,9 @@ fig.update_layout(
 )
 
 fig.show()
+top_3 = master.sort_values('총범죄건수',ascending=True).loc[:, ['자치구', '술집 수']].head(3)
+print(top_3)
+
 ```
 
 :::
@@ -450,7 +498,22 @@ fig.show()
 
 ::::
 
+```{python}
+#|echo: false
+#|eval: true
 
+# 술집 수, 총범죄건수 상관관계
+corr = master.select_dtypes('number').corr()['술집 수']['총범죄건수']
+print("")
+print(f"술집 수와 총 범죄 건수의 상관계수: {corr:.4f}")
+print("다른 변수들과 비교했을 때, 가장 높은 상관관계를 보임")
+# 0.83537
+# 역시나 아주 강한 상관관게를 보인다. 
+# 다른 변수들과 비교했을 때 가장 높은 상관관계
+
+
+
+```
 
 
 
