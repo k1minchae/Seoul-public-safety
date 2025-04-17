@@ -502,6 +502,29 @@ print(dw_stat)
 
 # -----------------------------------------------------
 
+# 클러스터링에 사용할 변수 선택
+features = ['구별 경찰수', '총 음식점 수', '총생활인구수',  '파출소수']
+
+# 선택한 변수로부터 데이터 추출
+X = df2[features]
+
+# 데이터 표준화
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# 군집 개수 설정
+k_values = [2]
+
+for k in k_values:
+    # KMeans 모델 생성 및 학습
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    df2[f'클러스터_{k}'] = kmeans.fit_predict(X_scaled)
+
+
+
+
+
+
 def plot_cluster_map(df, cluster_col, title):
     # 복사본 생성 및 군집 번호를 보기 좋게 변경
     df_viz = df.copy()
@@ -528,12 +551,10 @@ def plot_cluster_map(df, cluster_col, title):
         hover_name='자치구',
         hover_data={
             '군집명': True,
-            '범죄율': True,
-            '총범죄건수': True,
-            '총생활인구수(내)': True,
-            '1인가구수': True,
+            '구별 경찰수': True,
+            '총 음식점 수': True,
+            '총생활인구수': True,
             '파출소수': True,
-            'CCTV 수량': True
         },
         mapbox_style='carto-positron',
         center={'lat': 37.5665, 'lon': 126.9780},
@@ -546,13 +567,12 @@ def plot_cluster_map(df, cluster_col, title):
     fig.update_layout(coloraxis_showscale=False)
     fig.show()
 
-
 # 군집 개수 2개 시각화
 plot_cluster_map(df2, '클러스터_2', '서울시 자치구별 K-평균 클러스터링 (k=2)')
 
 # ---------------------------------------
 
-def show_top_correlations_by_cluster(df, cluster_col, features, top_n=5, top_gu_n=3):
+def show_top_correlations_by_cluster(df, cluster_col, features, top_n=5, top_gu_n=3, gu_sort_key='총생활인구수'):
     for idx, cluster_label in enumerate(sorted(df[cluster_col].unique()), start=1):
         print(f"\n🔹 군집 {idx} 상위 {top_n} 상관 변수쌍")
 
@@ -576,10 +596,23 @@ def show_top_correlations_by_cluster(df, cluster_col, features, top_n=5, top_gu_
         for (var1, var2), corr_val in top_corrs.items():
             print(f"  📌 {var1} & {var2} → 상관계수: {corr_val:.2f}")
 
-        # 군집에 속한 상위 자치구 보여주기
-        gu_list = cluster_df['자치구'].tolist()[:top_gu_n]
-        print(f"\n    대표 자치구 (상위 {top_gu_n}개): {', '.join(gu_list)}")
+        # 대표 자치구 출력 (기준 변수로 정렬)
+        if gu_sort_key in cluster_df.columns:
+            sorted_cluster_df = cluster_df.sort_values(by=gu_sort_key, ascending=False)
+            gu_list = sorted_cluster_df['자치구'].head(top_gu_n).tolist()
+        else:
+            gu_list = cluster_df['자치구'].head(top_gu_n).tolist()  # 대체: 정렬 기준 없을 경우
+
+        print(f"\n    🏙️ 대표 자치구 (기준: {gu_sort_key}, 상위 {top_gu_n}개): {', '.join(gu_list)}")
+
+
 
 show_top_correlations_by_cluster(df2, '클러스터_2', features, top_n=5, top_gu_n=3)
 
+
+# 군집 1은 총생활인구수가 다른 변수들과 강한 양의 상관을 가지며, 
+# 인구가 많은 지역일수록 음식점도 많고, 경찰 수와 파출소 수도 많음 → 상업·유동 인구 중심형 지역
+
+# 군집 2는 총생활인구수와 다른 변수들 간의 상관이 낮고, 
+# 대신 구별 경찰수와 파출소수 간에만 높은 상관 → 주거형/공공안전 중심형 지역일 가능성
 
