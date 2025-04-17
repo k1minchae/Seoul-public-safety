@@ -112,6 +112,9 @@ fitted_vals = model.fittedvalues
 residuals = model.resid
 
 #  정규성 검정
+# 잔차(오차)가 정규분포를 따르는지 확인
+# 잔차가 정규분포를 따라야 회귀계수의
+# 신뢰구간, t-검정, F-검정 등의 통계적 추론이 정확
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -119,17 +122,20 @@ import scipy.stats as stats
 import statsmodels.api as sm
 
 # Q-Q plot
+# 잔차의 분포가 정규분포와 얼마나 유사한지 시각적으로 확인
 sm.qqplot(residuals, line='45', fit=True)
 plt.title('Q-Q Plot of Residuals')
 plt.show()
 
 # 히스토그램
+# 잔차 분포의 전체적인 모양 확인
 sns.histplot(residuals, kde=True)
 plt.title('Histogram of Residuals')
 plt.xlabel('Residuals')
 plt.show()
 
 # Shapiro-Wilk Test
+# Shapiro-Wilk Test: 정규성을 수치적으로 검정
 
 from scipy.stats import shapiro
 stat, p = shapiro(residuals)
@@ -138,7 +144,7 @@ print(f'Shapiro-Wilk Test: stat={stat:.4f}, p-value={p:.4f}')
 
 
 # 등분산성 검정 (Homoscedasticity)
-
+# 잔차의 분산이 예측값과 무관하게 일정한지 확인
 # Fitted vs Residuals Plot
 
 plt.scatter(fitted_vals, residuals)
@@ -150,6 +156,7 @@ plt.show()
 
 
 # Breusch-Pagan Test
+# 통계적으로 등분산 여부 검정 (p < 0.05면 이분산성 있음)
 from statsmodels.stats.diagnostic import het_breuschpagan
 bp_test = het_breuschpagan(residuals, X)
 bp_labels = ['LM Statistic', 'LM-Test p-value', 'F-Statistic', 'F-Test p-value']
@@ -158,6 +165,9 @@ print(dict(zip(bp_labels, bp_test)))
 # p-value > 0.05 → 등분산성 만족
 
 # 다중공선성 확인 (VIF)
+# 목적: 독립 변수 간 상관관계가 너무 높은지 확인
+# 독립 변수끼리 강한 상관이 있으면 회귀계수가 불안정해지고 해석이 어려워짐
+# 일반적으로 VIF > 10 이면 다중공선성 의심
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 import pandas as pd
 
@@ -169,6 +179,9 @@ print(vif_df)
 
 
 #  Cook's Distance (이상치 영향 확인)
+# 목적: 일부 데이터가 회귀 결과에 지나치게 큰 영향을 주는지 확인
+# 영향력 높은 이상치는 전체 모델을 왜곡시킬 수 있음
+# 일반적으로 0.5 이상이면 주의, 1 이상이면 영향력 큰 이상치로 간주
 from statsmodels.stats.outliers_influence import OLSInfluence
 influence = OLSInfluence(model)
 cooks_d = influence.cooks_distance[0]
@@ -244,3 +257,69 @@ fig = px.choropleth_mapbox(
 fig.show()
 
 
+
+
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+import plotly.express as px
+
+
+# 클러스터링에 사용할 변수 선택
+features = ['총생활인구수(내)', '총생활인구수(외)', '1인가구수', '파출소수', 'CCTV 총수량']
+
+# 선택한 변수로부터 데이터 추출
+X = merged_df[features]
+
+# 데이터 표준화
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# 군집 개수 설정
+k_values = [2, 3]
+
+for k in k_values:
+    # KMeans 모델 생성 및 학습
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    merged_df[f'클러스터_{k}'] = kmeans.fit_predict(X_scaled)
+
+
+def plot_cluster_map(df, cluster_col, title):
+    # 군집 개수에 따라 색상 목록 정의
+    num_clusters = df[cluster_col].nunique()
+    color_map = {
+        2: ['#636EFA', '#EF553B'],
+        3: ['#636EFA', '#EF553B', '#00CC96']
+    }
+    colors = color_map.get(num_clusters, px.colors.qualitative.Plotly)
+
+    fig = px.choropleth_mapbox(
+        df,
+        geojson=geojson_data,
+        locations='자치구',
+        featureidkey='properties.SIG_KOR_NM',
+        color=cluster_col,
+        color_discrete_sequence=colors,
+        hover_name='자치구',
+        hover_data={
+            '범죄율': True,
+            '총범죄건수': True,
+            '총생활인구수(내)': True,
+            '1인가구수': True,
+            '파출소수': True,
+            'CCTV 총수량': True
+        },
+        mapbox_style='carto-positron',
+        center={'lat': 37.5665, 'lon': 126.9780},
+        zoom=10,
+        opacity=0.7,
+        title=title
+    )
+    fig.show()
+
+
+# 군집 개수 2개 시각화
+plot_cluster_map(merged_df, '클러스터_2', '서울시 자치구별 K-평균 클러스터링 (k=2)')
+
+# 군집 개수 3개 시각화
+plot_cluster_map(merged_df, '클러스터_3', '서울시 자치구별 K-평균 클러스터링 (k=3)')
