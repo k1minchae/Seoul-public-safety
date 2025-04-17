@@ -68,6 +68,37 @@ model3 = sm.OLS(y, X3).fit()
 print(model3.summary())
 
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+# 1. 총 음식점 수 vs 총범죄건수
+sns.regplot(data=X_scaled_df, x='총 음식점 수', y='총범죄건수', ax=axes[0], line_kws={'color': 'red'})
+for i, row in X_scaled_df.iterrows():
+    if row['총범죄건수'] > 3:
+        axes[0].text(
+            row['총 음식점 수'], row['총범죄건수'],
+            '강남구',  # 표시할 텍스트
+            fontsize=12, color='red', ha='left', va='bottom'
+        )
+axes[0].grid(True)
+
+# 2. 총생활인구수 vs 총범죄건수
+sns.regplot(data=X_scaled_df, x='총생활인구수', y='총범죄건수', ax=axes[1], line_kws={'color': 'green'})
+for i, row in X_scaled_df.iterrows():
+    if row['총범죄건수'] > 3:
+        axes[1].text(
+            row['총생활인구수'], row['총범죄건수'],
+            '강남구',  # 표시할 텍스트
+            fontsize=12, color='red', ha='left', va='bottom'
+        )
+axes[1].grid(True)
+
+plt.tight_layout()
+plt.show()
+
+
 #aic로 stepwise한거
 X1 = X_scaled_df[['총생활인구수', '구별 경찰수','안전벨 개수' ,'CCTV 수량', '총 음식점 수', '1인가구수','파출소수']]
 y = X_scaled_df['총범죄건수']
