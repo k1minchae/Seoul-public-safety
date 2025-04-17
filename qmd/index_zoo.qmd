@@ -744,6 +744,15 @@ cctv_df = cctv_df.rename(columns={'count':'cctv'})
 one_df = pd.read_excel('../data/seoul_one_person_housed_updated.xlsx')
 one_df = one_df.rename(columns={'서울시 1인가구수':'자치구'})
 
+food_and_entertain = pd.read_csv('../data/머지한유흥업소데이터.csv', encoding='utf-8')
+food_and_entertain = food_and_entertain.rename(columns={'총_개수': '총 음식점 수'})
+
+#  파출소 개수
+SeoulSafetyCenter = pd.read_excel('../data/Seoul_SafetyCener_info.xlsx')
+station_counts = SeoulSafetyCenter['자치구'].value_counts().reset_index()
+station_counts.columns = ['자치구', '파출소수']
+
+
 
 #####################
 # 2그룹
@@ -753,10 +762,13 @@ one_df = one_df.rename(columns={'서울시 1인가구수':'자치구'})
 merged_df2 = pd.merge(crime_df, adult_df, on='자치구', how='inner')
 merged_df2 = pd.merge(merged_df2, cctv_df, on='자치구', how='inner')
 merged_df2 = pd.merge(merged_df2, one_df, on='자치구', how='inner')
+merged_df2 = pd.merge(merged_df2, station_counts, on='자치구', how='inner')
+merged_df2 = pd.merge(merged_df2, food_and_entertain, on='자치구', how='inner')
 # print(merged_df2.head())
 
 
-cluster_features = ['구별 경찰수', '유흥업소_개수', '총생활인구수', 'cctv', '계']
+cluster_features = ['구별 경찰수', '총 음식점 수', '총생활인구수',  '파출소수']
+
 
 # 전처리 + 스케일링
 X = merged_df2[cluster_features].copy()
@@ -769,7 +781,7 @@ merged_df2['클러스터'] = kmeans2.fit_predict(X_scaled)
 
 # 각 군집에는 어떤 구가 있나?
 first_2 = merged_df2.loc[merged_df2['클러스터'] == 0, :]
-second_2 = merged_df2.loc[merged_df2['클러스터'] == 1, :]
+second_2= merged_df2.loc[merged_df2['클러스터'] == 1, :]
 
 group1_2 = first_2['자치구'].unique()
 group2_2 = second_2['자치구'].unique()
@@ -777,9 +789,9 @@ group2_2 = second_2['자치구'].unique()
 
 def assign_group(gu):
     if gu in group1_2:
-        return 0
+        return '군집2'
     elif gu in group2_2:
-        return 1
+        return '군집1'
     else:
         return np.nan  
 
@@ -831,7 +843,10 @@ fig.show()
 
 </div>
 
-
+```{python}
+#|eval: false
+first_2
+```
 
 ```{python}
 
@@ -841,6 +856,7 @@ print(group2_2)
 #  '은평구']
 
 ```
+
 
 ```{python}
 # 각 군집별 구
@@ -872,8 +888,8 @@ sns.boxplot(data=merged_df2, x='클러스터', y='총범죄건수', palette='pas
 plt.title('클러스터별 총 범죄건수 분포 (Boxplot)')
 plt.xticks([0, 1], ['군집 1', '군집 2'])
 plt.ylabel('총범죄건수')
-plt.text(0.12, 15000 , f'↑강남구', ha='center', va='bottom', fontsize=17, color='red')
-plt.text(1.12, 8800 , f'↓마포구', ha='center', va='bottom', fontsize=17, color='red')
+plt.text(0.12, 15150 , f'↑강남구', ha='center', va='bottom', fontsize=17, color='red')
+plt.text(1.12, 9300 , f'↓관악구', ha='center', va='bottom', fontsize=17, color='red')
 plt.grid(True)
 plt.tight_layout()
 
@@ -885,6 +901,43 @@ plt.show()
 </div>
 
 <p> 군집간 총 범죄건수의 평균에 차이가 있다.</p>
+
+
+---
+
+## {data-background-image="img/default-bg.png" }
+<h6> 군집 분석으로 알 수 있는 것 </h6>
+
+
+| 클러스터 | 구별 경찰수 | 총 음식점 수 | 총생활인구수 | 파출소수 | 총범죄건수 |
+|----------|--------------|----------------|------------------|-----------|------------|
+| 1 | 1058.38 | 7468.25 | 464,404.93 | 12.38 | 9337.38 |
+| 2 | 734.65 | 3824.71 | 377,246.14 | 8.41 | 5867.06 |
+
+
+<!-- 범죄 건수와 상관계수가 높은 변수들로 군집 분석을 수행했다.  -->
+
+<section>
+  <h6>클러스터 1 분석</h6>
+  <ul>
+    <li>복잡하고 밀도 높은 지역일 가능성이 크다.</li>
+    <li>인구가 많고 상권이 크며 유동인구도 많고 외부 유입도 활발하다.</li>
+    <li>경찰과 파출소 수도 많아 치안 자원이 이미 많이 투입된 상태다.</li>
+    <li>그럼에도 불구하고 <strong>범죄 건수가 높다</strong>.</li>
+  </ul>
+</section>
+
+<section>
+  <h6>클러스터 2 분석</h6>
+  <ul>
+    <li>클러스터 1보다 평균적으로 수치가 낮다.</li>
+    <li>도시 외곽 또는 상대적으로 조용한 주거 지역일 가능성이 있다.</li>
+    <li>인구도 적고 음식점도 적으며, 경찰/파출소 수도 적다.</li>
+    <li>그에 따라 <strong>범죄 건수도 낮다</strong>.</li>
+  </ul>
+</section>
+
+<!-- <p><em>→ 군집 간 범죄 건수의 차이가 뚜렷해 <strong>군집 분석 결과가 유효한 것으로 보인다</strong>.</em></p> -->
 
 
 
