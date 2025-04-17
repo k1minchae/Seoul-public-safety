@@ -24,7 +24,16 @@ jupyter: python3
 <div style="width: 100%; display: flex; justify-content: center; flex-direction: column;">
 <img src="img/toast.png" style="display: block; margin: 30px auto; width: 70%; margin-top:10px;"/>
 
+:::{.fragment}
 <p style="display: block; margin: 0 auto;">드디어 이삭 강사님이 서울로 이사를 가기로 했습니다!</p>
+
+:::
+
+:::{.fragment}
+
+<p style="display: block; margin: 10px auto; color: #d1d5db !important;">치안 데이터를 통해 강사님의 안전한 서울살이를 ...</p>
+
+:::
 
 </div>
 
