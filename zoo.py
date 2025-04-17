@@ -110,17 +110,17 @@ import seaborn as sns
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
-
+# 데이터 불러오기
 crime_df = pd.read_csv('./data/crime_rate.csv', encoding="cp949", sep='\t')
 adult_df = pd.read_csv('./data/머지한유흥업소데이터.csv', encoding='utf-8')
 cctv_df = pd.read_csv('./data/Seoul_CCTV_info.csv',encoding='cp949')
 cctv_df = cctv_df['자치구'].value_counts().reset_index()
 cctv_df = cctv_df.rename(columns={'count':'cctv'})
 
-one_df = pd.read_excel('./data/seoul_one _person_housed_updated.xlsx')
+one_df = pd.read_excel('./data/seoul_one_person_housed_updated.xlsx')
 one_df = one_df.rename(columns={'서울시 1인가구수':'자치구'})
 
-
+# merged
 merged_df = pd.merge(crime_df, adult_df, on='자치구', how='inner')
 merged_df = pd.merge(merged_df, cctv_df, on='자치구', how='inner')
 merged_df = pd.merge(merged_df, one_df, on='자치구', how='inner')
@@ -321,17 +321,189 @@ fig.show()
 
 
 
+#####################
+# 2그룹
+# 클러스터링 (KMeans)
+
+# merged
+merged_df2 = pd.merge(crime_df, adult_df, on='자치구', how='inner')
+merged_df2 = pd.merge(merged_df2, cctv_df, on='자치구', how='inner')
+merged_df2 = pd.merge(merged_df2, one_df, on='자치구', how='inner')
+print(merged_df2.head())
+
+
+cluster_features = ['구별 경찰수', '유흥업소_개수', '총생활인구수', 'cctv', '계']
+
+# 전처리 + 스케일링
+X = merged_df2[cluster_features].copy()
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+
+kmeans2 = KMeans(n_clusters=2, random_state=42)
+merged_df2['클러스터'] = kmeans2.fit_predict(X_scaled)
+
+# 각 군집에는 어떤 구가 있나?
+first_2 = merged_df2.loc[merged_df2['클러스터'] == 0, :]
+second_2 = merged_df2.loc[merged_df2['클러스터'] == 1, :]
+
+# 각 군집별 구
+group1_2 = first_2['자치구'].unique()
+group2_2= second_2['자치구'].unique()
+
+
+# 조금 보기 불편
+plt.figure(figsize=(12, 6))
+sns.scatterplot(data=merged_df, x='범죄율', y='유흥업소_개수', hue='클러스터', style='자치구')
+plt.title('자치구 치안 클러스터링')
+plt.show()
+
+
+# 군집별 총범죄건수 평균 확인
+merged_df2.groupby('클러스터')['총범죄건수'].mean()
+
+# 군집별 총생활인구수 평균 확인
+merged_df2.groupby('클러스터')['총생활인구수'].mean()
+
+
+def assign_group(gu):
+    if gu in group1_2:
+        return 0
+    elif gu in group2_2:
+        return 1
+    else:
+        return np.nan  
+
+merged_df2['클러스터'] = merged_df2['자치구'].apply(assign_group)
+merged_df2['클러스터'] = merged_df2['클러스터'].astype(str)
+
+
+# 정규성 검정: 시각화 (Q-Q Plot)
+import statsmodels.api as sm
+# 클러스터 0
+sm.qqplot(first_2['총범죄건수'], line='s')
+plt.title('Q-Q Plot: 그룹 0')
+plt.grid(True)
+plt.show()
+
+# 클러스터 1
+sm.qqplot(second_2['총범죄건수'], line='s')
+plt.title('Q-Q Plot: 그룹 1')
+plt.grid(True)
+plt.show()
+
+
+# 정규성 검정 (Shapiro-Wilk Test)
+from scipy.stats import shapiro
+# 각집단의 정규성을 검정하기 위해 shapiro-wilk test 
+
+# H0: 각 군집의 총범죄 건수가 정규분포를 따른다. 
+# HA: 각 군집의 총범죄 건수가 정규분포를 따르지 않는다. 
+
+stat0, p0 = shapiro(first['총범죄건수'])
+stat1, p1 = shapiro(second['총범죄건수'])
+
+print(f'클러스터 0 정규성 p값: {p0:.4f}')
+print(f'클러스터 1 정규성 p값: {p1:.4f}')
+# 클러스터 0 정규성 p값: 0.5609
+# 클러스터 1 정규성 p값: 0.2681
+
+# 유의수준 0.05하 귀무가설 기각할 수 없다.
+# 두 집단 모두 정규성을 따른다. 
+
+
+# 비모수 2검정
+from scipy.stats import mannwhitneyu
+# H0: 두 집단의 총범죄 건수의 중앙값이 같다.
+# HA: 두 집단의 총범죄 건수의 중앙값이 다르다.
+u_stat, p_val = mannwhitneyu(first_2['총범죄건수'], second_2['총범죄건수'], alternative='two-sided')
+print(f'Mann-Whitney U 검정 통계량: {u_stat:.4f}')
+print(f'p-value: {p_val:.4f}')
+# 0.05보다 작으므로 귀무가설 기각
+# 두 집단은 다르다.
 
 
 
 
 
 
+# boxplot
+# 클러스터링 결과를 시각화
+plt.figure(figsize=(7, 5))
+
+# boxplot 그리기
+sns.boxplot(data=merged_df2, x='클러스터', y='총범죄건수', palette='pastel')
+
+# 그래프 설정
+plt.title('클러스터별 총범죄건수 분포 (Boxplot)')
+plt.xticks([0, 1], ['그룹 1', '그룹 2'])
+plt.ylabel('총범죄건수')
+plt.text(0, 14500 , f'↑강남구', ha='center', va='bottom', fontsize=17, color='red')
+plt.grid(True)
+plt.tight_layout()
+
+# 출력
+plt.show()
+
+
+# 이상치 학인
+second.loc[second['총범죄건수'] >= 16000, :]    # 강남구: 이상치
+
+
+
+##### 그룹별 지도 시각화
+import pandas as pd
+import plotly.express as px
+import json
+
+# GeoJSON 파일 불러오기
+with open('./data/seoul_districts.geojson', encoding='utf-8') as f:
+    geojson_data = json.load(f)
+
+
+custom_colors = px.colors.qualitative.Set3 
+
+
+# Choropleth Mapbox 시각화
+fig = px.choropleth_mapbox(
+    merged_df2,
+    geojson=geojson_data,
+    locations='자치구',                        # 지역 기준
+    featureidkey='properties.SIG_KOR_NM',     # GeoJSON의 자치구 이름 키
+    color='클러스터',                          # 클러스터별 색상 분리
+    color_discrete_sequence=custom_colors,   # 색상 변경
+    hover_name='자치구',
+    hover_data={'총범죄건수': True, '클러스터': True},
+    mapbox_style='carto-positron',
+    center={'lat': 37.5665, 'lon': 126.9780},
+    zoom=10,
+    opacity=0.7,
+    title='서울시 자치구별 클러스터 및 총범죄건수 시각화'
+)
+
+# 지도 크기 및 여백 조정
+fig.update_layout(
+    margin={"r": 0, "t": 30, "l": 0, "b": 0},
+    height=700,
+    width=800
+)
+
+fig.show()
 
 
 
 
+# 클러스터 수 
+sse = []
+for k in range(1, 11):
+    kmeans = KMeans(n_clusters=k, random_state=0).fit(data)
+    sse.append(kmeans.inertia_)
 
+plt.plot(range(1, 11), sse, 'o-')
+plt.xlabel("Number of clusters (k)")
+plt.ylabel("SSE (Inertia)")
+plt.title("Elbow Method")
+plt.show()
 
 
 
