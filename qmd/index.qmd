@@ -383,6 +383,40 @@ fig.show()
 ::::
 
 
+:::{.fragment}
+```{python}
+#|echo: false
+#|eval: true
+
+police_sum = master.groupby('자치구')['구별 경찰수'].sum()
+center_sum = master.groupby('자치구')['치안센터수'].sum()
+
+# 하나의 데이터프레임으로 병합
+df_plot = pd.DataFrame({
+    '구별 경찰수': police_sum,
+    '치안센터수': center_sum
+}).reset_index()
+
+import matplotlib.pyplot as plt
+plt.rcParams['font.family'] = 'Malgun Gothic'
+plt.rcParams['axes.unicode_minus'] = False
+# 시각화
+plt.figure(figsize=(8, 3))
+plt.plot(df_plot['자치구'], df_plot['구별 경찰수'], marker='o', label='구별 경찰수')
+plt.plot(df_plot['자치구'], df_plot['치안센터수'] * 100, marker='s', linestyle='--', label='치안센터수 (x100)')  # 스케일 맞춤
+
+plt.title('치안 센터 수와 경찰 수의 상관계수: 0.6500')
+plt.xlabel('자치구')
+plt.ylabel('경찰/치안센터 수')
+plt.xticks(rotation=45)
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+```
+:::
+
 ```{python}
 #|echo: false
 #|eval: true
@@ -392,12 +426,11 @@ corr_2 = master.select_dtypes('number').corr()['치안센터수']['구별 경찰
 print("")
 print(f"치안센터와 경찰관 수의 상관관계: {corr_2:.4f}")
 print("다른 변수들과 비교했을 때 가장 높은 상관관계를 보임")
+print("종로구와 강남구만 조금 다르고 나머지는 비슷하다.")
 # 0.65004
 # 역시나 강한 상관관게를 보인다. 다른 변수들과 비교했을 때 가장 높은 상관관계
 
 ```
-
-
 
 
 
@@ -440,7 +473,7 @@ fig = px.choropleth_mapbox(
 # 레이아웃 조정
 fig.update_layout(
     margin={"r": 0, "t": 30, "l": 0, "b": 0},
-    height=500,
+    height=350,
     width=500
 )
 
@@ -483,7 +516,7 @@ fig = px.choropleth_mapbox(
 # 레이아웃 조정
 fig.update_layout(
     margin={"r": 0, "t": 30, "l": 0, "b": 0},
-    height=500,
+    height=350,
     width=500
 )
 
