@@ -111,3 +111,7 @@ a {
 h6 {
   font-size: 52px !important;
 }
+
+#small-font {
+  font-size: 14px !important;
+}

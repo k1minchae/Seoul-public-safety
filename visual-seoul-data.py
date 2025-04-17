@@ -39,6 +39,23 @@ fig.update_layout(
 
 fig.show()
 
+########
+master.sort_values(by='총생활인구수',ascending=False)
+# 1위 송파구: 753278 , 2위 강남구: 633521, 3위 강서구: 533814
+
+
+print(master.sort_values(ascending=False, by="총생활인구수").loc[:, ['자치구', '총생활인구수']].head(3))
+print(master.sort_values(ascending=False, by="1인가구수").loc[:, ['자치구', '1인가구수']].head(3))
+print(master.sort_values(ascending=False, by="1인가구수").head(3))['자치구']
+
+########
+master.sort_values(by='총생활인구수',ascending=False)
+# 1위 송파구: 753278 , 2위 강남구: 633521, 3위 강서구: 533814
+
+
+print(master.sort_values(ascending=False, by="총생활인구수").loc[:, ['자치구', '총생활인구수']].head(3))
+print(master.sort_values(ascending=False, by="1인가구수").loc[:, ['자치구', '1인가구수']].head(3))
+print(master.sort_values(ascending=False, by="1인가구수").head(3))['자치구']
 
 
 # 1인 가구 수 지도 시각화
@@ -70,6 +87,11 @@ fig.update_layout(
 
 fig.show()
 
+########
+master.sort_values(by='1인가구수',ascending=False)
+# 1위 관악구: 150745 , 2위 강서구: 104509, 3위 송파구: 87140
+# 가장 적은 구는: 중구: 28293
+# 종로구: 29334, 중구: 28293가 하위 2위다. 
 
 
 # 정규성 검정 (Shapiro-Wilk Test)
@@ -106,6 +128,7 @@ cctv = pd.read_csv('./data/Seoul_CCTV_info.csv',encoding='cp949')
 
 
 gu_counts = cctv['자치구'].value_counts().reset_index()
+top_3 = cctv['자치구'].value_counts().sort_values(ascending=False).head(3)
 gu_counts.columns = ['SIG_KOR_NM', '건수']
 
 # 시각화
@@ -129,6 +152,14 @@ fig.update_layout(
 )
 
 fig.show()
+
+########
+master.sort_values(by='CCTV총수량',ascending=False)
+# 1위 강남구: 7009 , 2위 관악구: 5366, 3위 서초구: 5060
+# 가장 적은 구는 용산구: 1078 그다음 적은 구는 종로구: 1930
+
+
+
 
 # 서울 안전벨 수 지도 시각화
 
@@ -161,6 +192,13 @@ fig.update_layout(
 )
 
 fig.show()
+
+########
+master.sort_values(by='안전벨 수',ascending=False)
+# 1위 강남구: 1713 , 2위 용산구: 1421, 3위 구로구: 1372
+# 가장 적은 구는 강북구: 22 그다음 적은 구는 서초구: 50
+
+
 
 
 # CCTV, 안심벨 상관관계
@@ -235,9 +273,12 @@ fig.update_layout(
 )
 
 fig.show()
-# 종로구가 20개로 가장 많다. 
-# 다음으로 중구가 15개
-# 다음으로 강남구가 14개
+# 종로구가 20개로 가장 많다. 2위: 중구 15개 3위: 강남구 14개
+master.sort_values(by='치안센터수',ascending=False)
+# 1위 종로구: 20 , 2위 중구: 15, 3위 강남구: 1372
+# 가장 적은 구는 금천구: 5 그다음 적은 구는 용산구: 7
+
+
 
 
 # 경찰관수 지도 시각화
@@ -285,6 +326,30 @@ master.select_dtypes('number').corr()['치안센터수']['술집 수']
 # 0.54607
 # 다른 변수들과 비교했을 때 두번째로 높은 상관관계
 # 치안을 위해 술집 수가 많을 수록 치안센터를 늘리는 경향이 있음.
+
+# 자치구별 집계
+police_sum = master.groupby('자치구')['구별 경찰수'].sum()
+center_sum = master.groupby('자치구')['치안센터수'].sum()
+
+# 하나의 데이터프레임으로 병합
+df_plot = pd.DataFrame({
+    '구별 경찰수': police_sum,
+    '치안센터수': center_sum
+}).reset_index()
+
+# 시각화
+plt.figure(figsize=(8, 3))
+plt.plot(df_plot['자치구'], df_plot['구별 경찰수'], marker='o', label='구별 경찰수')
+plt.plot(df_plot['자치구'], df_plot['치안센터수'] * 100, marker='s', linestyle='--', label='치안센터수 (x100)')  # 스케일 맞춤
+
+plt.title('자치구별 경찰수 vs 치안센터수')
+plt.xlabel('자치구')
+plt.ylabel('경찰/치안센터 수')
+plt.xticks(rotation=45)
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
 
 
 # 비모수 2검정
@@ -335,7 +400,8 @@ fig.update_layout(
 
 fig.show()
 
-master.sort_values('술집 수',ascending=True)
+top_3 = master.sort_values('술집 수',ascending=True).loc[:, ['자치구', '술집 수']].head(3)
+print(top_3)
 # 강남구: 12700, 마포구: 8258, 서초구: 5563개 순으로 술집 수가 많다.
 # 양천구: 3094, 금천구: 3179, 동작구: 3276 (동작구에 국립현충원이 있다.  유흥시설을 지을 수 없다.)
 # 
@@ -372,7 +438,8 @@ fig.update_layout(
 
 fig.show()
 
-
+top_3 = master.sort_values('총범죄건수',ascending=True).loc[:, ['자치구', '술집 수']].head(3)
+print(top_3)
 
 # 술집 수, 총범죄건수 상관관계
 master.select_dtypes('number').corr()['술집 수']['총범죄건수']
@@ -382,11 +449,10 @@ master.select_dtypes('number').corr()['술집 수']['총범죄건수']
 
 
 
-
 # 비모수 2검정
 from scipy.stats import mannwhitneyu
-# H0: 구별 치안센터수와  경찰수 중앙값이 같다.
-# HA: 구별 치안센터수와  경찰수 중앙값이 다르다.
+# H0: 구별 술집 수와  총범죄건수 중앙값이 같다.
+# HA: 구별 술집 수와  총범죄건수 중앙값이 다르다.
 
 u_stat, p_val = mannwhitneyu(master['술집 수'], master['총범죄건수'], alternative='two-sided')
 print(f'Mann-Whitney U 검정 통계량: {u_stat:.4f}')
@@ -394,10 +460,7 @@ print(f'p-value: {p_val:.4f}')
 # Mann-Whitney U 검정 통계량: 123.0000
 # p-value: 0.0007
 # 0.05보다 작으므로 귀무가설 기각
-# HA: 구별 치안센터 수와 경찰관 수의 중앙값이 다르다.
-
-
-
+# HA: 구별 술집 수와  총범죄건수 중앙값이 다르다.
 
 
 
@@ -430,3 +493,5 @@ fig.update_layout(
 )
 
 fig.show()
+
+
