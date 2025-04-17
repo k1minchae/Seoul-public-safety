@@ -519,6 +519,59 @@ plt.show()
 :::::
 
 
+---
+
+## {data-background-image="img/default-bg.png"}
+
+<p style="margin-bottom: 40px; margin-top:20px;">비슷한 치안끼리 군집화</p>
+
+저희는 K-Means 클러스터링을 사용해서 했음요
+
+
+---
+
+## {data-background-image="img/default-bg.png"}
+
+
+<p>K-Means 클러스터링이란?</p>
+
+:::{.fragment}
+
+<p>유사한 특성을 가진 데이터를 자동으로 그룹으로 묶는 비지도 학습 기법</p>
+
+:::
+
+
+- 사용자가 군집 개수(K)를 정하면,
+
+- K개의 중심점을 기준으로 데이터를 그룹화하고,
+
+- 각 데이터를 가장 가까운 중심점에 할당합니다.
+
+- 중심점을 반복적으로 조정하며 유사한 데이터끼리 묶는 군집을 만듭니다.
+
+
+:::{.fragment}
+
+<p>서울시 자치구별 <code>'구별_경찰수'</code>, <code>'유흥업소_개수'</code>, <code>'총생활인구수'</code>, <code>'cctv'</code> 등을 기준으로
+치안 특성이 비슷한 지역을 자동으로 군집화하기 위해 사용했습니다.</p>
+
+:::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ---
 
