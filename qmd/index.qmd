@@ -1,5 +1,5 @@
 ---
-title: "제목입니다."
+title: "서울시 치안데이터 분석"
 # subtitle: "부제목입니다."
 # author: "2조"
 format: 
@@ -11,7 +11,7 @@ format:
     # logo: logo.png
     css: styles.css
     title-slide-attributes: 
-      data-background-image: "img/title.png"
+      data-background-image: "img/title-bg.png"
       data-background-size: cover
     slide-attributes:
       # data-background-image: "assets/bg.png"
@@ -19,7 +19,44 @@ format:
 jupyter: python3
 ---
 
+
+## {data-background-image="img/default-bg.png"}
+<div style="width: 100%; display: flex; justify-content: center; flex-direction: column;">
+<img src="img/toast.png" style="display: block; margin: 30px auto; width: 70%; margin-top:10px;"/>
+
+:::{.fragment}
+<p style="display: block; margin: 0 auto;">드디어 이삭 강사님이 서울로 이사를 가기로 했습니다!</p>
+
+:::
+
+:::{.fragment}
+
+<p style="display: block; margin: 10px auto; color: #d1d5db !important;">치안 데이터를 통해 강사님의 안전한 서울살이를 ...</p>
+
+:::
+
+</div>
+
+
+
+
+---
+
 ## {data-background-image="img/list-bg.png"}
+
+
+
+---
+
+## {data-background-image="img/data-bg.png"}
+<p style="font-size: 18px;
+    position: absolute;
+    bottom: -20px;
+    color: #9ca3af !important;">출처: 서울시 공공데이터포털 (https://data.seoul.go.kr/)</p>
+
+
+
+
 
 
 
@@ -30,8 +67,550 @@ jupyter: python3
 
 ## {data-background-image="img/default-bg.png"}
 
-<p style="margin-top:10px;">CCTV가 많으면 범죄율을
-<br/>도움이 될까요?</p>
+::::{.columns}
+
+<p style="margin-bottom: 40px;">데이터 살펴보기</p>
+
+:::{.column width="50%"}
+```{python}
+#|eval: true
+#|echo: false
+# 인구 데이터
+# 생활 인구수 지도 시각화
+import pandas as pd
+import numpy as np
+import plotly.express as px
+import json
+
+with open('../data/seoul_districts.geojson', encoding='utf-8') as f:
+    geojson_data = json.load(f)
+
+master = pd.read_excel('../data/sanggwan_df.xlsx')
+master.columns
+
+fig = px.choropleth_mapbox(
+    master,
+    geojson=geojson_data,
+    locations='자치구',                        # 지역 이름
+    featureidkey='properties.SIG_KOR_NM',     
+    color='총생활인구수',                         # 시각화에 사용할 값
+    color_continuous_scale='Blues',            # 색상 스케일
+    hover_name='자치구',
+    hover_data={'총생활인구수': True},
+    mapbox_style='carto-positron',
+    center={'lat': 37.5665, 'lon': 126.9780},  # 서울 중심
+    zoom=9,
+    opacity=0.7,
+    title='서울시 자치구별 구별 총생활인구수 시각화'
+)
+
+# 레이아웃 조정
+fig.update_layout(
+    margin={"r": 0, "t": 30, "l": 0, "b": 0},
+    height=500,
+    width=500
+)
+
+fig.show()
+
+```
+
+:::
+
+:::{.column width="50%"}
+```{python}
+#|eval: true
+#|echo: false
+
+
+# 1인 가구 수 지도 시각화
+master = pd.read_excel('../data/sanggwan_df.xlsx')
+master.columns
+
+fig = px.choropleth_mapbox(
+    master,
+    geojson=geojson_data,
+    locations='자치구',                        # 지역 이름
+    featureidkey='properties.SIG_KOR_NM',     
+    color='1인가구수',                         # 시각화에 사용할 값
+    color_continuous_scale='Blues',            # 색상 스케일
+    hover_name='자치구',
+    hover_data={'1인가구수': True},
+    mapbox_style='carto-positron',
+    center={'lat': 37.5665, 'lon': 126.9780},  # 서울 중심
+    zoom=9,
+    opacity=0.7,
+    title='서울시 자치구별 구별 1인가구수 시각화'
+)
+
+# 레이아웃 조정
+fig.update_layout(
+    margin={"r": 0, "t": 30, "l": 0, "b": 0},
+    height=500,
+    width=500
+)
+
+fig.show()
+
+```
+
+:::
+
+::::
+
+
+
+
+
+
+
+
+
+
+
+---
+
+## {data-background-image="img/default-bg.png"}
+
+<p style="margin-bottom: 40px;">데이터 살펴보기</p>
+
+::::{.columns}
+
+:::{.column width="50%"}
+
+```{python}
+#|echo: false
+#|eval: true
+
+
+# 치안 데이터
+# CCTV 수 지도 시각화
+cctv = pd.read_csv('../data/Seoul_CCTV_info.csv',encoding='cp949')
+
+
+gu_counts = cctv['자치구'].value_counts().reset_index()
+gu_counts.columns = ['SIG_KOR_NM', '건수']
+
+# 시각화
+fig = px.choropleth_mapbox(
+    gu_counts,
+    geojson=geojson_data,
+    locations="SIG_KOR_NM",
+    featureidkey="properties.SIG_KOR_NM",
+    color="건수",
+    color_continuous_scale="Greens",
+    mapbox_style="carto-positron",
+    center={"lat": 37.5665, "lon": 126.9780},
+    zoom=9,
+    opacity=0.7,
+    title="서울시 자치구별 CCTV 설치 건수"
+)
+fig.update_layout(
+    margin={"r":0, "t":30, "l":0, "b":0},
+    height=500,
+    width=500
+)
+
+fig.show()
+
+```
+
+
+:::
+
+
+
+:::{.column width="50%"}
+```{python}
+#|echo: false
+#|eval: true
+# 서울 안전벨 수 지도 시각화
+
+bell = pd.read_excel('../data/Seoul_Safetybell.xlsx')
+
+bell['자치구'].value_counts()
+
+
+gu_counts = bell['자치구'].value_counts().reset_index()
+gu_counts.columns = ['SIG_KOR_NM', '건수']
+
+# 시각화
+fig = px.choropleth_mapbox(
+    gu_counts,
+    geojson=geojson_data,
+    locations="SIG_KOR_NM",
+    featureidkey="properties.SIG_KOR_NM",
+    color="건수",
+    color_continuous_scale="Greens",
+    mapbox_style="carto-positron",
+    center={"lat": 37.5665, "lon": 126.9780},
+    zoom=9,
+    opacity=0.7,
+    title="서울시 자치구별 안심벨 설치 건수"
+)
+fig.update_layout(
+    margin={"r":0, "t":30, "l":0, "b":0},
+    height=500,
+    width=500
+)
+
+fig.show()
+
+
+```
+
+
+:::
+
+::::
+
+
+
+---
+
+## {data-background-image="img/default-bg.png"}
+
+<p style="margin-bottom: 40px;">데이터 살펴보기</p>
+
+::::{.columns}
+
+:::{.column width="50%"}
+```{python}
+#|echo: false
+#|eval: true
+
+# 치안 센터 수 지도 시각화
+master = pd.read_excel('../data/sanggwan_df.xlsx')
+master.columns
+
+fig = px.choropleth_mapbox(
+    master,
+    geojson=geojson_data,
+    locations='자치구',                        # 지역 이름
+    featureidkey='properties.SIG_KOR_NM',     
+    color='치안센터수',                         # 시각화에 사용할 값
+    color_continuous_scale='Greens',            # 색상 스케일
+    hover_name='자치구',
+    hover_data={'치안센터수': True},
+    mapbox_style='carto-positron',
+    center={'lat': 37.5665, 'lon': 126.9780},  # 서울 중심
+    zoom=9,
+    opacity=0.7,
+    title='서울시 자치구별 구별 치안센터수 시각화'
+)
+
+# 레이아웃 조정
+fig.update_layout(
+    margin={"r": 0, "t": 30, "l": 0, "b": 0},
+    height=500,
+    width=500
+)
+
+fig.show()
+
+
+```
+
+:::
+
+
+:::{.column width="50%"}
+```{python}
+#|echo: false
+#|eval: true
+
+
+# 경찰관수 지도 시각화
+master = pd.read_excel('../data/sanggwan_df.xlsx')
+master.columns
+
+fig = px.choropleth_mapbox(
+    master,
+    geojson=geojson_data,
+    locations='자치구',                        # 지역 이름
+    featureidkey='properties.SIG_KOR_NM',     
+    color='구별 경찰수',                         # 시각화에 사용할 값
+    color_continuous_scale='Greens',            # 색상 스케일
+    hover_name='자치구',
+    hover_data={'구별 경찰수': True},
+    mapbox_style='carto-positron',
+    center={'lat': 37.5665, 'lon': 126.9780},  # 서울 중심
+    zoom=9,
+    opacity=0.7,
+    title='서울시 자치구별 구별 경찰수 시각화'
+)
+
+# 레이아웃 조정
+fig.update_layout(
+    margin={"r": 0, "t": 30, "l": 0, "b": 0},
+    height=500,
+    width=500
+)
+
+fig.show()
+
+```
+
+:::
+
+
+::::
+
+
+
+
+
+
+
+
+
+---
+
+## {data-background-image="img/default-bg.png"}
+
+<p style="margin-bottom: 40px;">데이터 살펴보기</p>
+
+::::{.columns}
+
+
+:::{.column width="50%"}
+```{python}
+#|echo: false
+#|eval: true
+
+# 상권 데이터
+# 술집 수 지도 시각화
+master = pd.read_excel('../data/sanggwan_df.xlsx')
+master.columns
+
+fig = px.choropleth_mapbox(
+    master,
+    geojson=geojson_data,
+    locations='자치구',                        # 지역 이름
+    featureidkey='properties.SIG_KOR_NM',     
+    color='술집 수',                         # 시각화에 사용할 값
+    color_continuous_scale='OrRd',            # 색상 스케일
+    hover_name='자치구',
+    hover_data={'술집 수': True},
+    mapbox_style='carto-positron',
+    center={'lat': 37.5665, 'lon': 126.9780},  # 서울 중심
+    zoom=9,
+    opacity=0.7,
+    title='서울시 자치구별 구별 술집 수 시각화'
+)
+
+# 레이아웃 조정
+fig.update_layout(
+    margin={"r": 0, "t": 30, "l": 0, "b": 0},
+    height=500,
+    width=500
+)
+
+fig.show()
+```
+
+:::
+
+:::{.column width="50%"}
+```{python}
+#|echo: false
+#|eval: true
+
+
+# 범죄 데이터
+# 서울 범죄 수 지도 시각화
+master = pd.read_excel('../data/sanggwan_df.xlsx')
+master.columns
+
+fig = px.choropleth_mapbox(
+    master,
+    geojson=geojson_data,
+    locations='자치구',                        # 지역 이름
+    featureidkey='properties.SIG_KOR_NM',     
+    color='총범죄건수',                         # 시각화에 사용할 값
+    color_continuous_scale='YlOrRd',            # 색상 스케일
+    hover_name='자치구',
+    hover_data={'총범죄건수': True},
+    mapbox_style='carto-positron',
+    center={'lat': 37.5665, 'lon': 126.9780},  # 서울 중심
+    zoom=9,
+    opacity=0.7,
+    title='서울시 자치구별 총범죄건수 시각화'
+)
+
+# 레이아웃 조정
+fig.update_layout(
+    margin={"r": 0, "t": 30, "l": 0, "b": 0},
+    height=500,
+    width=500
+)
+
+fig.show()
+```
+
+:::
+
+
+::::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---
+
+## {data-background-image="img/default-bg.png"}
+
+:::::{.columns}
+
+:::{.column width="60%"}
+상관계수 분석
+```{python}
+#|echo: false
+#|eval: true
+import pandas as pd
+import matplotlib.pyplot as plt
+merged_df= pd.read_excel('../data/sanggwan_df.xlsx')
+merged_df = merged_df.drop(columns=['범죄율'])
+plt.rcParams['font.family'] = 'Malgun Gothic'
+plt.rcParams['axes.unicode_minus'] = False
+
+# 상관계수 
+corr_df = merged_df.drop(columns=["자치구"]).corr()
+corr_df 
+
+# 히트맵
+import seaborn as sns
+plt.rcParams['font.family'] ='Malgun Gothic'
+plt.rcParams['axes.unicode_minus'] =False
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(corr_df, annot=True, cmap="coolwarm", fmt=".2f")
+plt.title("서울시 자치구별 변수 간 상관관계")
+plt.xticks(rotation=45)  
+plt.tight_layout()
+plt.show()
+
+```
+:::
+
+:::{.column width="40%"}
+<p style="margin-top:90px;">범죄건수 주요 변수</p>
+
+- 술집 수
+- 생활 인구 수
+- 구별 경찰 수
+- CCTV 총 수량
+- 1인가구수
+:::
+:::::
+
+
+---
+
+## {data-background-image="img/default-bg.png"}
+
+<p style="margin-bottom: 40px; margin-top:20px;">비슷한 치안끼리 군집화</p>
+
+저희는 K-Means 클러스터링을 사용해서 했음요
+
+
+---
+
+## {data-background-image="img/default-bg.png"}
+
+
+<p>K-Means 클러스터링이란?</p>
+
+:::{.fragment}
+
+<p>유사한 특성을 가진 데이터를 자동으로 그룹으로 묶는 비지도 학습 기법</p>
+
+:::
+
+
+- 사용자가 군집 개수(K)를 정하면,
+
+- K개의 중심점을 기준으로 데이터를 그룹화하고,
+
+- 각 데이터를 가장 가까운 중심점에 할당합니다.
+
+- 중심점을 반복적으로 조정하며 유사한 데이터끼리 묶는 군집을 만듭니다.
+
+
+:::{.fragment}
+
+<p>서울시 자치구별 <code>'구별_경찰수'</code>, <code>'유흥업소_개수'</code>, <code>'총생활인구수'</code>, <code>'cctv'</code> 등을 기준으로
+치안 특성이 비슷한 지역을 자동으로 군집화하기 위해 사용했습니다.</p>
+
+:::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---
+
+## {data-background-image="img/default-bg.png"}
+<div>
+<p style="position:absolute; top:0px;"></p>
+<p style="margin-top:300px; margin-left:300px; font-size: 56px;">"CCTV가 많으면 범죄율을 <br/> 낮추는 데에 도움이 될까요?"</p>
+
 <img src = "img/police.png"
-  style="position: absolute; top: 100px; left:-80px;"
+  style="position: absolute; top: 100px; left:-80px; width: 300px;"
 />
+</div>
+
+
+
+
+
+
+
+---
+
+## {data-background-image="img/default-bg.png"}
+
+<div style="width:100%;">
+  <img src="img/cctv-news.png" style="margin-top: 30px; width: 50%;"/>
+
+  <p style="text-align: center;">하지만 분석 결과는...?</p>
+
+  <img src="img/yellow.png" style="margin-top: 30px; position:absolute; bottom:0px; margin-top: 30px; position:absolute; bottom: 0px; right: 0px; width: 40%;"/>
+
+</div>
+
+--- 
+
+## {data-background-image="img/result-bg.png"}
+
+
+
+
+---
+
+## {data-background-image="img/final-bg.png"}

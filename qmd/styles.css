@@ -99,4 +99,11 @@ p,
 li,
 a {
   font-family: "Cafe24Ssurround" !important;
+  color: #111827 !important;
+}
+
+.reveal h1 {
+  text-shadow: var(--r-heading1-text-shadow);
+  font-size: 80px;
+  color: #4b5563 !important;
 }
