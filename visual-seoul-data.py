@@ -39,6 +39,11 @@ fig.update_layout(
 
 fig.show()
 
+########
+master.sort_values(by='총생활인구수',ascending=False)
+# 1위 송파구: 753278 , 2위 강남구: 633521, 3위 강서구: 533814
+
+
 
 
 # 1인 가구 수 지도 시각화
@@ -70,6 +75,11 @@ fig.update_layout(
 
 fig.show()
 
+########
+master.sort_values(by='1인가구수',ascending=False)
+# 1위 관악구: 150745 , 2위 강서구: 104509, 3위 송파구: 87140
+# 가장 적은 구는: 중구: 28293
+# 종로구: 29334, 중구: 28293가 하위 2위다. 
 
 
 # 정규성 검정 (Shapiro-Wilk Test)
@@ -130,6 +140,14 @@ fig.update_layout(
 
 fig.show()
 
+########
+master.sort_values(by='CCTV총수량',ascending=False)
+# 1위 강남구: 7009 , 2위 관악구: 5366, 3위 서초구: 5060
+# 가장 적은 구는 용산구: 1078 그다음 적은 구는 종로구: 1930
+
+
+
+
 # 서울 안전벨 수 지도 시각화
 
 bell = pd.read_excel('./data/Seoul_Safetybell.xlsx')
@@ -161,6 +179,13 @@ fig.update_layout(
 )
 
 fig.show()
+
+########
+master.sort_values(by='안전벨 수',ascending=False)
+# 1위 강남구: 1713 , 2위 용산구: 1421, 3위 구로구: 1372
+# 가장 적은 구는 강북구: 22 그다음 적은 구는 서초구: 50
+
+
 
 
 # CCTV, 안심벨 상관관계
@@ -235,9 +260,12 @@ fig.update_layout(
 )
 
 fig.show()
-# 종로구가 20개로 가장 많다. 
-# 다음으로 중구가 15개
-# 다음으로 강남구가 14개
+# 종로구가 20개로 가장 많다. 2위: 중구 15개 3위: 강남구 14개
+master.sort_values(by='치안센터수',ascending=False)
+# 1위 종로구: 20 , 2위 중구: 15, 3위 강남구: 1372
+# 가장 적은 구는 금천구: 5 그다음 적은 구는 용산구: 7
+
+
 
 
 # 경찰관수 지도 시각화
@@ -382,11 +410,10 @@ master.select_dtypes('number').corr()['술집 수']['총범죄건수']
 
 
 
-
 # 비모수 2검정
 from scipy.stats import mannwhitneyu
-# H0: 구별 치안센터수와  경찰수 중앙값이 같다.
-# HA: 구별 치안센터수와  경찰수 중앙값이 다르다.
+# H0: 구별 술집 수와  총범죄건수 중앙값이 같다.
+# HA: 구별 술집 수와  총범죄건수 중앙값이 다르다.
 
 u_stat, p_val = mannwhitneyu(master['술집 수'], master['총범죄건수'], alternative='two-sided')
 print(f'Mann-Whitney U 검정 통계량: {u_stat:.4f}')
@@ -394,10 +421,7 @@ print(f'p-value: {p_val:.4f}')
 # Mann-Whitney U 검정 통계량: 123.0000
 # p-value: 0.0007
 # 0.05보다 작으므로 귀무가설 기각
-# HA: 구별 치안센터 수와 경찰관 수의 중앙값이 다르다.
-
-
-
+# HA: 구별 술집 수와  총범죄건수 중앙값이 다르다.
 
 
 
@@ -430,3 +454,5 @@ fig.update_layout(
 )
 
 fig.show()
+
+
