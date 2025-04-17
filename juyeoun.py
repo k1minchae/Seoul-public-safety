@@ -52,6 +52,7 @@ merged_data['총_개수'] = merged_data['일반음식점_개수'] + merged_data[
 merged_data
 
 
+
 #############################################################################################################
 # 데이터
 # [머지한유흥업소데이터.csv]: 서울시 유흥업소 + 서울시 술판매 일반음식점 (구별)
@@ -110,7 +111,7 @@ merged_df = sulzip_df.merge(crime_rate_df, on="자치구") \
 merged_df.to_excel('./data/sanggwan_df.xlsx', index=False)
 
 merged_df= pd.read_excel('./data/sanggwan_df.xlsx')
-
+merged_df = merged_df.drop(columns=['범죄율'])
 
 # 상관계수 
 corr_df = merged_df.drop(columns=["자치구"]).corr()
@@ -128,12 +129,16 @@ plt.title("서울시 자치구별 변수 간 상관관계")
 plt.tight_layout()
 plt.show()
 
+
+
 # 결과 
 # 범죄율과의 상관관계
 # 술집 수와 범죄율 간에는 양의 상관관계(0.61)가 있습니다. 
-# 이는 술집이 많은 지역에서 범죄율이 높을 가능성이 있다는 것을 나타냅니다
+# 이는 술집이 많은 지역에서 범죄율이 높을 가능성이 있다는 것을 나타냅니다. 
 
 
 #############################################################################################################
+
+
 
 
