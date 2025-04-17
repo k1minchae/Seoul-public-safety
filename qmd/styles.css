@@ -119,3 +119,9 @@ h6 {
 .reveal div .sourceCode pre code {
   max-height: 450px;
 }
+
+.reveal .slide ul li > *:last-child,
+.reveal .slide ol li > *:last-child {
+  margin-block-end: 0;
+  font-size: 28px;
+}
