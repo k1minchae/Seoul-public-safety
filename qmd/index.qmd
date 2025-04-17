@@ -20,22 +20,19 @@ jupyter: python3
 ---
 
 
+
 ## {data-background-image="img/default-bg.png"}
-<div style="width: 100%; display: flex; justify-content: center; flex-direction: column;">
-<img src="img/toast.png" style="display: block; margin: 30px auto; width: 70%; margin-top:10px;"/>
+<div>
+<p style="position:absolute; top:0px;"></p>
+<p style="margin-top:300px; margin-left:300px; font-size: 56px;">"CCTV가 많으면 범죄율을 <br/> 낮추는 데에 도움이 될까요?"</p>
 
-:::{.fragment}
-<p style="display: block; margin: 0 auto;">드디어 이삭 강사님이 서울로 이사를 가기로 했습니다!</p>
-
-:::
-
-:::{.fragment}
-
-<p style="display: block; margin: 10px auto; color: #d1d5db !important;">치안 데이터를 통해 강사님의 안전한 서울살이를 ...</p>
-
-:::
-
+<img src = "img/police.png"
+  style="position: absolute; top: 100px; left:-80px; width: 300px;"
+/>
 </div>
+
+
+
 
 
 
@@ -69,7 +66,7 @@ jupyter: python3
 
 ::::{.columns}
 
-<p style="margin-bottom: 40px;">데이터 살펴보기</p>
+<h6 style="margin-bottom: 40px;">데이터 살펴보기</h6>
 
 :::{.column width="50%"}
 ```{python}
@@ -172,7 +169,7 @@ fig.show()
 
 ## {data-background-image="img/default-bg.png"}
 
-<p style="margin-bottom: 40px;">데이터 살펴보기</p>
+<h6 style="margin-bottom: 40px;">데이터 살펴보기</h6>
 
 ::::{.columns}
 
@@ -270,7 +267,7 @@ fig.show()
 
 ## {data-background-image="img/default-bg.png"}
 
-<p style="margin-bottom: 40px;">데이터 살펴보기</p>
+<h6 style="margin-bottom: 40px;">데이터 살펴보기</h6>
 
 ::::{.columns}
 
@@ -368,7 +365,7 @@ fig.show()
 
 ## {data-background-image="img/default-bg.png"}
 
-<p style="margin-bottom: 40px;">데이터 살펴보기</p>
+<h6 style="margin-bottom: 40px;">데이터 살펴보기</h6>
 
 ::::{.columns}
 
@@ -523,9 +520,77 @@ plt.show()
 
 ## {data-background-image="img/default-bg.png"}
 
-<p style="margin-bottom: 40px; margin-top:20px;">비슷한 치안끼리 군집화</p>
+<h6 style="margin-top: 30px;">회귀분석</h6>
 
-저희는 K-Means 클러스터링을 사용해서 했음요
+:::::{.columns}
+:::{.column width="50%"}
+```{python}
+#|echo: false
+#|eval: true
+import pandas as pd
+import matplotlib.pyplot as plt
+merged_df= pd.read_excel('../data/sanggwan_df.xlsx')
+merged_df = merged_df.drop(columns=['범죄율'])
+plt.rcParams['font.family'] = 'Malgun Gothic'
+plt.rcParams['axes.unicode_minus'] = False
+
+# 상관계수 
+corr_df = merged_df.drop(columns=["자치구"]).corr()
+corr_df 
+
+# 히트맵
+import seaborn as sns
+plt.rcParams['font.family'] ='Malgun Gothic'
+plt.rcParams['axes.unicode_minus'] =False
+
+plt.figure(figsize=(6, 4))
+sns.heatmap(corr_df, annot=True, cmap="coolwarm", fmt=".2f")
+plt.title("서울시 자치구별 변수 간 상관관계")
+plt.xticks(rotation=45)  
+plt.tight_layout()
+plt.show()
+
+```
+
+상관 관계 높은 변수 임의 선택
+
+:::
+
+:::{.column width="50%"}
+
+<img src="https://logoarena-storage.s3.amazonaws.com/contests/public/5601/11006_1425290467_stepwise04.png"/>
+
+<p style="margin-top:90px;"><span style="color:#ef4444 !important;">VS</span>   Stepwise로 변수 선택</p>
+
+:::
+
+
+:::::
+
+
+
+
+
+
+
+
+
+
+
+---
+
+## {data-background-image="img/default-bg.png"}
+
+<p style="text-align: center;
+    margin-top: 50px;
+    font-size: 52px;">서울시 치안 기준 군집화</p>
+
+<p>상관계수가 높은 변수를 활용해서,</p>
+
+<p>비슷한 치안 특성을 가진 구를 찾기위해</p>
+<p>저희는 K-Means 클러스터링을 사용했습니다.</p>
+
+<img src="img/k-means-ex.png"/>
 
 
 ---
@@ -553,7 +618,7 @@ plt.show()
 
 :::{.fragment}
 
-<p>서울시 자치구별 <code>'구별_경찰수'</code>, <code>'유흥업소_개수'</code>, <code>'총생활인구수'</code>, <code>'cctv'</code> 등을 기준으로
+<p>서울시 자치구별 '구별_경찰수', '유흥업소_개수', '총생활인구수', 'cctv' 등을 기준으로
 치안 특성이 비슷한 지역을 자동으로 군집화하기 위해 사용했습니다.</p>
 
 :::
@@ -569,21 +634,6 @@ plt.show()
 
 
 
-
-
-
-
----
-
-## {data-background-image="img/default-bg.png"}
-<div>
-<p style="position:absolute; top:0px;"></p>
-<p style="margin-top:300px; margin-left:300px; font-size: 56px;">"CCTV가 많으면 범죄율을 <br/> 낮추는 데에 도움이 될까요?"</p>
-
-<img src = "img/police.png"
-  style="position: absolute; top: 100px; left:-80px; width: 300px;"
-/>
-</div>
 
 
 
