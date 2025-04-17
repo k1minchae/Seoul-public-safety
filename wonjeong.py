@@ -292,4 +292,3 @@ stat1, p1 = stats.shapiro(second_2['총범죄건수'])
 print(f'클러스터 0 정규성 p값: {p0:.4f}')
 print(f'클러스터 1 정규성 p값: {p1:.4f}')
 
-#군집 0이 귀무가설설
