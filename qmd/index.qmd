@@ -487,7 +487,7 @@ fig.update_layout(
 
 fig.show()
 
-top_3 = master.sort_values('술집 수',ascending=True).loc[:, ['자치구', '술집 수']].head(3)
+top_3 = master.sort_values('술집 수',ascending=False).loc[:, ['자치구', '술집 수']].head(3)
 print(top_3)
 
 ```
@@ -529,7 +529,7 @@ fig.update_layout(
 )
 
 fig.show()
-top_3 = master.sort_values('총범죄건수',ascending=True).loc[:, ['자치구', '술집 수']].head(3)
+top_3 = master.sort_values('총범죄건수',ascending=False).loc[:, ['자치구', '총범죄건수']].head(3)
 print(top_3)
 
 ```
@@ -611,9 +611,9 @@ plt.show()
 :::{.column width="40%"}
 <p style="margin-top:90px;">범죄건수 주요 변수</p>
 
+- 구별 경찰 수
 - 술집 수
 - 생활 인구 수
-- 구별 경찰 수
 - CCTV 총 수량
 - 1인가구수
 :::
@@ -779,47 +779,230 @@ print(model3.summary())
 ```
 
 
+
 ## {data-background-image="img/default-bg.png"}
 
-<h6 style="margin-top: 30px;">회귀분석(상관관계 기준)</h6>
+<h6 style="margin-top: 30px;">회귀분석(Stepwise)</h6>
+<img src="https://logoarena-storage.s3.amazonaws.com/contests/public/5601/11006_1425290467_stepwise04.png"/>
 
+이번엔 Stepwise방식으로 회귀 분석을 진행해보겠습니다.
+
+1. AIC 기준
+2. Adj.R2 기준
+
+
+
+
+## {data-background-image="img/default-bg.png"}
+
+<h6 style="margin-top: 30px;">회귀분석(비교)</h6>
+
+:::{.panel-tabset}
+
+#### AIC
 ```{python}
 #|eval: true
 #|echo: false
 
-import matplotlib.pyplot as plt
-import seaborn as sns
+X1 = X_scaled_df[['총생활인구수', '구별 경찰수','안전벨 개수' ,'CCTV 수량', '총 음식점 수', '1인가구수','파출소수']]
+y = X_scaled_df['총범죄건수']
 
-fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+lr = LinearRegression()
+names = X1.columns
+def aic_score(estimator,X1, y):
+    X1 = sm.add_constant(X1) 
+    model = sm.OLS(y, X1).fit()
+    return -model.aic
 
-# 1. 총 음식점 수 vs 총범죄건수
-sns.regplot(data=X_scaled_df, x='총 음식점 수', y='총범죄건수', ax=axes[0], line_kws={'color': 'red'})
-for i, row in X_scaled_df.iterrows():
-    if row['총범죄건수'] > 3:
-        axes[0].text(
-            row['총 음식점 수'], row['총범죄건수'],
-            '강남구',  # 표시할 텍스트
-            fontsize=12, color='red', ha='left', va='bottom'
-        )
-axes[0].grid(True)
+# Perform SFS
+sfs = SFS(lr,
+          k_features=(1,7),   
+          forward=True,      
+          scoring=aic_score,  
+          cv=0)
+sfs.fit(X1, y)
 
-# 2. 총생활인구수 vs 총범죄건수
-sns.regplot(data=X_scaled_df, x='총생활인구수', y='총범죄건수', ax=axes[1], line_kws={'color': 'green'})
-for i, row in X_scaled_df.iterrows():
-    if row['총범죄건수'] > 3:
-        axes[1].text(
-            row['총생활인구수'], row['총범죄건수'],
-            '강남구',  # 표시할 텍스트
-            fontsize=12, color='red', ha='left', va='bottom'
-        )
-axes[1].grid(True)
 
-plt.tight_layout()
+x1 = X_scaled_df[['총생활인구수', '구별 경찰수', 'CCTV 수량', '총 음식점 수', '파출소수']]
+x1 = sm.add_constant(x1)
+model1 = sm.OLS(y, x1).fit()
+print(model1.summary())
+```
+
+#### R2
+
+```{python}
+#|eval: true
+#|echo: false
+X2 = X_scaled_df[['총생활인구수', '구별 경찰수','안전벨 개수' ,'CCTV 수량', '총 음식점 수', '1인가구수','파출소수']]
+y = X_scaled_df['총범죄건수']
+# Adj R2 스코어 함수 정의
+def adjusted_r2_score(estimator, X2, y):
+    y_pred = estimator.predict(X2)
+    n = X2.shape[0]
+    p = X2.shape[1]
+    r2 = r2_score(y, y_pred)
+    adjusted_r2 = 1 - (1 - r2) * (n - 1) / (n - p - 1)
+    return adjusted_r2
+
+
+sfs = SFS(lr,
+          k_features=(1,7),
+          forward=True,
+          scoring=adjusted_r2_score,
+          cv=0)
+
+sfs.fit(X2, y)
+
+
+selected_indices_r2 = list(sfs.k_feature_idx_)
+names_r2 = np.array(X2.columns)[:-1]
+
+x2 = X_scaled_df[['총생활인구수', '구별 경찰수', '안전벨 개수', 'CCTV 수량', '총 음식점 수', '1인가구수']]
+x2 = sm.add_constant(x2)
+model2 = sm.OLS(y, x2).fit()
+print(model2.summary())
+```
+
+
+
+#### 상관계수
+```{python}
+#| echo: false
+#| eval: true
+X3 = X_scaled_df[['총 음식점 수','CCTV 수량','1인가구수','구별 경찰수','총생활인구수']]
+y = X_scaled_df['총범죄건수']
+X3 = sm.add_constant(X3)
+model3 = sm.OLS(y, X3).fit()
+print(model3.summary())
+```
+
+
+:::
+
+```{python}
+#|echo: false
+#|eval: true
+print(f"★모델 1의 AIC: {model1.aic:.3f}, 모델 1의 R2: {model1.rsquared:.3f}")
+print(f"모델 2의 AIC: {model2.aic:.3f}, 모델 2의 R2: {model2.rsquared:.3f}")
+print(f"모델 3의 AIC: {model3.aic:.3f}, 모델 3의 R2: {model3.rsquared:.3f}")
+```
+
+
+
+
+## {data-background-image="img/default-bg.png"}
+
+<h6 style="margin-top: 30px;">최종 모델 검증</h6>
+
+```{python}
+#|echo: false
+#|eval: true
+residuals = model1.resid
+fitted_values = model1.fittedvalues
+plt.figure(figsize=(15,4))
+plt.subplot(1,2,1)
+plt.scatter(fitted_values, residuals)
+plt.axhline(y=0, color='black', linestyle='--')
+plt.subplot(1,2,2)
+stats.probplot(residuals, plot=plt)
 plt.show()
+```
+
+```{python}
+#|echo: true
+#|eval: true
+# 잔차정규성
+resid_stats, resid_pvalue = stats.shapiro(residuals)
+print(resid_pvalue)
 
 ```
 
-- 
+- 유의수준 5% 기각 X (정규성 만족)
+
+
+## {data-background-image="img/default-bg.png"}
+
+<h6 style="margin-top: 30px;">최종 모델 검증</h6>
+
+
+
+## {data-background-image="img/default-bg.png"}
+
+<h6 style="margin-top: 30px;">최종 모델 검증</h6>
+
+```{python}
+#|echo: true
+#|eval: true
+#잔차 등분산성
+bptest = het_breuschpagan(model1.resid, model1.model.exog)
+print(f'BP-test statistics: {bptest[0]:.3f}')
+print(f'BP-test p_value: {bptest[1]:.3f}') 
+#p-value가 0.3으로 귀무가설 기각하지 못함
+#등분산성 만족한다고 볼 수 있음
+
+
+#잔차 독립성
+dw_stat = durbin_watson(model1.resid)
+print(f'DW test: {dw_stat:.3f}')  
+# 2 정도로 잔차 독립성 만족한다고 볼 수 있음
+```
+
+- 잔차의 등분산성과 독립성도 만족합니다.
+
+
+## {data-background-image="img/default-bg.png"}
+
+<h6 style="margin-top: 30px;">최종 모델 해석</h6>
+
+```{python}
+#|echo: false
+#|eval: true
+x1 = X_scaled_df[['총생활인구수', '구별 경찰수', 'CCTV 수량', '총 음식점 수', '파출소수']]
+x1 = sm.add_constant(x1)
+model1 = sm.OLS(y, x1).fit()
+print(model1.summary())
+```
+
+```{python}
+#|echo: false
+#|eval: true
+print("총생활인구수")
+print("구별 경찰수")
+print("총 음식점 수")
+print("파출소수")
+```
+
+- 통계적으로 유의함 / CCTV 제외한 변수들도 유의함
+
+
+## {data-background-image="img/default-bg.png"}
+
+<img src="img/cctv-news.png" style="margin-top: 30px; width: 50%;"/>
+
+:::{.fragment}
+<img src="img/ppp.png" style="    position: absolute;
+    top: 100px;
+    right: 1px;
+    width: 35%; "/>
+
+:::
+
+
+---
+ 
+
+## {data-background-image="img/result-bg.png"}
+
+<div style="margin-top:250px;">
+CCTV가 많은 구는 범죄수가 적을까?
+
+- CCTV 수와 범죄건수 간에는 유의미한 관계가 없다고 볼 수 있었다
+
+- 오히려 총 생활인구수, 경찰 수, 음식점 수, 파출소 수가 범죄건수에 더 큰 영향을 미친다.
+</div>
+
+
 
 
 
@@ -830,7 +1013,7 @@ plt.show()
 
 <p style="text-align: center;
     margin-top: 50px;
-    font-size: 52px;">서울시 치안 기준 군집화</p>
+    font-size: 52px;">서울시 치안 기준 군집화 (보너스)</p>
 
 <p>상관계수가 높은 변수를 활용해서,</p>
 
@@ -840,70 +1023,244 @@ plt.show()
 <img src="img/k-means-ex.png"/>
 
 
----
-
-## {data-background-image="img/default-bg.png"}
-
-
-<p>K-Means 클러스터링이란?</p>
-
-:::{.fragment}
-
-<p>유사한 특성을 가진 데이터를 자동으로 그룹으로 묶는 비지도 학습 기법</p>
-
-:::
-
-
-- 사용자가 군집 개수(K)를 정하면,
-
-- K개의 중심점을 기준으로 데이터를 그룹화하고,
-
-- 각 데이터를 가장 가까운 중심점에 할당합니다.
-
-- 중심점을 반복적으로 조정하며 유사한 데이터끼리 묶는 군집을 만듭니다.
-
-
-:::{.fragment}
-
-<p>서울시 자치구별 '구별_경찰수', '유흥업소_개수', '총생활인구수', 'cctv' 등을 기준으로
-치안 특성이 비슷한 지역을 자동으로 군집화하기 위해 사용했습니다.</p>
-
-:::
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
----
-
-## {data-background-image="img/default-bg.png"}
-
-<div style="width:100%;">
-  <img src="img/cctv-news.png" style="margin-top: 30px; width: 50%;"/>
-
-  <p style="text-align: center;">하지만 분석 결과는...?</p>
-
-  <img src="img/yellow.png" style="margin-top: 30px; position:absolute; bottom:0px; margin-top: 30px; position:absolute; bottom: 0px; right: 0px; width: 40%;"/>
-
-</div>
 
 --- 
 
-## {data-background-image="img/result-bg.png"}
+## {data-background-image="img/default-bg.png" .scrollable}
+<style>
+.center {
+    display: flex;
+    justify-content: center;  /* 수평 정렬 */
+    align-items: center;      /* 수직 정렬 */
+}
+</style>
+
+<h6 style="margin-top:30px;">군집 개수 2개로 분석 수행</h6>
+
+<div class="center">
+```{python}
+#|echo: false
+#|eval: true
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+
+# 데이터 불러오기
+crime_df = pd.read_csv('../data/crime_rate.csv', encoding="cp949", sep='\t')
+adult_df = pd.read_csv('../data/머지한유흥업소데이터.csv', encoding='utf-8')
+cctv_df = pd.read_csv('../data/Seoul_CCTV_info.csv',encoding='cp949')
+cctv_df = cctv_df['자치구'].value_counts().reset_index()
+cctv_df = cctv_df.rename(columns={'count':'cctv'})
+
+one_df = pd.read_excel('../data/seoul_one_person_housed_updated.xlsx')
+one_df = one_df.rename(columns={'서울시 1인가구수':'자치구'})
+
+food_and_entertain = pd.read_csv('../data/머지한유흥업소데이터.csv', encoding='utf-8')
+food_and_entertain = food_and_entertain.rename(columns={'총_개수': '총 음식점 수'})
+
+#  파출소 개수
+SeoulSafetyCenter = pd.read_excel('../data/Seoul_SafetyCener_info.xlsx')
+station_counts = SeoulSafetyCenter['자치구'].value_counts().reset_index()
+station_counts.columns = ['자치구', '파출소수']
+
+
+
+#####################
+# 2그룹
+# 클러스터링 (KMeans)
+
+# merged
+merged_df2 = pd.merge(crime_df, adult_df, on='자치구', how='inner')
+merged_df2 = pd.merge(merged_df2, cctv_df, on='자치구', how='inner')
+merged_df2 = pd.merge(merged_df2, one_df, on='자치구', how='inner')
+merged_df2 = pd.merge(merged_df2, station_counts, on='자치구', how='inner')
+merged_df2 = pd.merge(merged_df2, food_and_entertain, on='자치구', how='inner')
+# print(merged_df2.head())
+
+
+cluster_features = ['구별 경찰수', '총 음식점 수', '총생활인구수',  '파출소수']
+
+
+# 전처리 + 스케일링
+X = merged_df2[cluster_features].copy()
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+
+kmeans2 = KMeans(n_clusters=2, random_state=42)
+merged_df2['클러스터'] = kmeans2.fit_predict(X_scaled)
+
+# 각 군집에는 어떤 구가 있나?
+first_2 = merged_df2.loc[merged_df2['클러스터'] == 0, :]
+second_2= merged_df2.loc[merged_df2['클러스터'] == 1, :]
+
+group1_2 = first_2['자치구'].unique()
+group2_2 = second_2['자치구'].unique()
+
+
+def assign_group(gu):
+    if gu in group1_2:
+        return '군집2'
+    elif gu in group2_2:
+        return '군집1'
+    else:
+        return np.nan  
+
+merged_df2['클러스터'] = merged_df2['자치구'].apply(assign_group)
+merged_df2['클러스터'] = merged_df2['클러스터'].astype(str)
+
+
+##### 군집별 지도 시각화 (2군집)
+import pandas as pd
+import plotly.express as px
+import json
+
+# GeoJSON 파일 불러오기
+with open('../data/seoul_districts.geojson', encoding='utf-8') as f:
+    geojson_data = json.load(f)
+
+
+custom_colors = px.colors.qualitative.Set3 
+
+
+# Choropleth Mapbox 시각화
+fig = px.choropleth_mapbox(
+    merged_df2,
+    geojson=geojson_data,
+    locations='자치구',                        # 지역 기준
+    featureidkey='properties.SIG_KOR_NM',     # GeoJSON의 자치구 이름 키
+    color='클러스터',                          # 클러스터별 색상 분리
+    color_discrete_sequence=custom_colors,   # 색상 변경
+    hover_name='자치구',
+    hover_data={'총범죄건수': True, '클러스터': True},
+    mapbox_style='carto-positron',
+    center={'lat': 37.5665, 'lon': 126.9780},
+    zoom=9,
+    opacity=0.7,
+    title='서울시 자치구별 클러스터 및 총범죄건수 시각화'
+)
+
+# 지도 크기 및 여백 조정
+# 레이아웃 조정
+fig.update_layout(
+    margin={"r": 0, "t": 30, "l": 0, "b": 0},
+    height=350,
+    width=500
+)
+
+fig.show()
+
+```
+
+</div>
+
+```{python}
+#|eval: false
+first_2
+```
+
+```{python}
+
+print(f'군집1')
+print(group2_2)
+# ['강남구' '강서구' '관악구' '서초구' '송파구' '영등포구'
+#  '은평구']
+
+```
+
+
+```{python}
+# 각 군집별 구
+print(f'군집2')
+print(group1_2)
+# ['강동구' '강북구' '광진구' '구로구' '금천구' '노원구'
+#  '도봉구' '동대문구' '동작구' '마포구' '서대문구' '성동구'
+#  '성북구' '양천구' '용산구' '종로구' '중구' '중랑구']
+
+```
+
+
+
+
+---
+
+## {data-background-image="img/default-bg.png" }
+<h6 style="margin-top: 30px;"> 군집 분석으로 알 수 있는 것 </h6>
+
+
+
+| <span style="font-size:26px;">군집</span> | <span style="font-size:26px;">총경찰수</span> | <span style="font-size:26px;">파출소수</span> | <span style="font-size:26px;">음식점수</span> | <span style="font-size:26px;">인구수</span> | <span style="font-size:26px;">총범죄수</span> |
+|----------|--------------|----------------|------------------|-----------|------------|
+| 1 | 1058.38 | 7468.25 | 464,404.93 | 12.38 | 9337.38 |
+| 2 | 734.65 | 3824.71 | 377,246.14 | 8.41 | 5867.06 |
+
+
+
+<!-- 범죄 건수와 상관계수가 높은 변수들로 군집 분석을 수행했다.  -->
+
+<section>
+  <h6 style="font-size: 40px !important; margin-top:35px;">그룹 1 분석</h6>
+  <ul>
+    <li style="font-size: 32px !important;"><span style="color: #ef4444;">복잡하고 밀도 높음</span></li>
+    <li style="font-size: 32px !important;">인구가 많고 상권이 큼</li>
+    <li style="font-size: 32px !important;">경찰과 파출소 수도 많아 <span style="color: #ef4444;"> 치안 자원이 이미 많이 투입된 상태</span> </li>
+    <li style="font-size: 32px !important;">그럼에도,  <span style="color: #ef4444;">범죄 건수가 높다</span></li>
+  </ul>
+</section>
+
+<section>
+  <h6 style="font-size: 40px !important; margin-top:35px;">그룹 2 분석</h6>
+  <ul>
+    <li style="font-size: 32px !important;">그룹 1보다 평균적으로 <span style="color: #ef4444;">수치가 낮다</span></li>
+    <li style="font-size: 32px !important;">도시 외곽 또는 상대적으로 <span style="color: #ef4444;"> 조용한 주거 지역</span></li>
+    <li style="font-size: 32px !important;">인구도 적고 음식점도 적으며, 경찰/파출소 수도 적다.</li>
+    <li style="font-size: 32px !important;">그에 따라, <span style="color: #ef4444;">범죄 건수도 낮다</span>.</li>
+  </ul>
+</section>
+
+<!-- <p><em>→ 군집 간 범죄 건수의 차이가 뚜렷해 <strong>군집 분석 결과가 유효한 것으로 보인다</strong>.</em></p> -->
+
+
+
+---
+
+## {data-background-image="img/default-bg.png" }
+<h6 style="margin-top: 30px;">군집간 총 범죄 건수 비교</h6>
+
+<div class="center">
+```{python}
+
+# boxplot
+# 클러스터링 결과를 시각화
+plt.figure(figsize=(7, 5))
+
+# boxplot 그리기
+sns.boxplot(data=merged_df2, x='클러스터', y='총범죄건수', palette='pastel')
+
+# 그래프 설정
+plt.title('클러스터별 총 범죄건수 분포 (Boxplot)')
+plt.xticks([0, 1], ['군집 1', '군집 2'])
+plt.ylabel('총범죄건수')
+plt.text(0.12, 15150 , f'↑강남구', ha='center', va='bottom', fontsize=17, color='red')
+plt.text(1.12, 9300 , f'↓관악구', ha='center', va='bottom', fontsize=17, color='red')
+plt.grid(True)
+plt.tight_layout()
+
+# 출력
+plt.show()
+
+```
+
+</div>
+
+<p> 군집간 총 범죄건수의 평균에 차이가 있다.</p>
+
+
 
 
 
