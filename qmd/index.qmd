@@ -24,12 +24,20 @@ jupyter: python3
 ## {data-background-image="img/default-bg.png"}
 <div>
 <p style="position:absolute; top:0px;"></p>
-<p style="margin-top:300px; margin-left:300px; font-size: 56px;">"CCTV가 많으면 범죄율을 <br/> 낮추는 데에 도움이 될까요?"</p>
+<p style="margin-top:300px; margin-left:300px; font-size: 56px;">"CCTV가 많으면 범죄수를 <br/> 낮추는 데에 도움이 될까요?"</p>
 
 <img src = "img/police.png"
   style="position: absolute; top: 100px; left:-80px; width: 300px;"
 />
 </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -668,7 +676,150 @@ plt.show()
 
 
 
+---
 
+## {data-background-image="img/default-bg.png"}
+
+<h6 style="margin-top: 30px;">회귀분석</h6>
+
+```{python}
+#|echo: false
+#|eval: true
+
+#필요한 라이브러리 부르기
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.linear_model import LinearRegression
+import statsmodels.api as sm
+from sklearn.metrics import r2_score
+from mlxtend.feature_selection import SequentialFeatureSelector as SFS
+from sklearn.preprocessing import StandardScaler
+from scipy import stats
+from statsmodels.stats.diagnostic import het_breuschpagan
+from statsmodels.stats.stattools import durbin_watson
+plt.rcParams['font.family'] ='Malgun Gothic'
+plt.rcParams['axes.unicode_minus'] =False
+
+
+
+
+food_and_entertain = pd.read_csv('../data/머지한유흥업소데이터.csv', encoding='utf-8')
+seoul_safetybell = pd.read_excel('../data/Seoul_Safetybell.xlsx', engine='openpyxl')
+cctv = pd.read_csv('../data/Seoul_CCTV_info.csv',encoding='cp949')
+crime_rate = pd.read_csv('../data/crime_rate.csv',encoding='euc-kr',sep='\t')
+one_housed = pd.read_excel('../data/seoul_one_person_housed_updated.xlsx')
+SeoulSafetyCenter = pd.read_excel('../data/Seoul_SafetyCener_info.xlsx')
+
+#안전벨 개수
+seoul_safetybell_df = seoul_safetybell.groupby('자치구')['번호'].count()
+#cctv 개수
+cctv_df = cctv.groupby('자치구')['CCTV 수량'].sum()
+
+#  1인가구 수
+one_housed_clean = one_housed.rename(columns={'서울시 1인가구수': '자치구', '계': '1인가구수'})
+one_housed_clean = one_housed_clean[['자치구', '1인가구수']]
+
+#  파출소 개수
+station_counts = SeoulSafetyCenter['자치구'].value_counts().reset_index()
+station_counts.columns = ['자치구', '파출소수']
+
+
+df = crime_rate.merge(seoul_safetybell_df, on='자치구') \
+                       .merge(cctv_df, on='자치구') \
+                       .merge(food_and_entertain, on='자치구') \
+                       .merge(one_housed_clean, on='자치구') \
+                       .merge(station_counts, on='자치구')
+df = df.rename(columns={'번호': '안전벨 개수','총_개수': '총 음식점 수'})
+df = df.drop(columns=['Unnamed: 8','일반음식점_개수','유흥업소_개수','자치구코드'])
+
+```
+
+<p>변수 전처리</p>
+
+```{python}
+#|echo: true
+#|eval: true
+df2 = df.copy()
+
+scaler = StandardScaler()
+x = ['총생활인구수', '총범죄건수', '구별 경찰수', 
+    '안전벨 개수', 'CCTV 수량', '총 음식점 수', 
+    '1인가구수', '파출소수']
+X_scaled = scaler.fit_transform(df2[x])
+
+X_scaled_df = pd.DataFrame(X_scaled, columns=x, index=df2.index)
+
+```
+
+- 변수의 Scale 이 각각 다르기 때문에, 표준화 수행
+- 변수간 영향을 공정하게 비교하자
+
+
+
+
+
+---
+
+## {data-background-image="img/default-bg.png"}
+
+<h6 style="margin-top: 30px;">회귀분석(상관관계 기준)</h6>
+
+
+```{python}
+#|eval: true
+#|echo: true
+X3 = X_scaled_df[['총 음식점 수','CCTV 수량','1인가구수','구별 경찰수','총생활인구수']]
+y = X_scaled_df['총범죄건수']
+X3 = sm.add_constant(X3)
+model3 = sm.OLS(y, X3).fit()
+print(model3.summary())
+
+```
+
+
+## {data-background-image="img/default-bg.png"}
+
+<h6 style="margin-top: 30px;">회귀분석(상관관계 기준)</h6>
+
+```{python}
+#|eval: true
+#|echo: false
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+# 1. 총 음식점 수 vs 총범죄건수
+sns.regplot(data=X_scaled_df, x='총 음식점 수', y='총범죄건수', ax=axes[0], line_kws={'color': 'red'})
+for i, row in X_scaled_df.iterrows():
+    if row['총범죄건수'] > 3:
+        axes[0].text(
+            row['총 음식점 수'], row['총범죄건수'],
+            '강남구',  # 표시할 텍스트
+            fontsize=12, color='red', ha='left', va='bottom'
+        )
+axes[0].grid(True)
+
+# 2. 총생활인구수 vs 총범죄건수
+sns.regplot(data=X_scaled_df, x='총생활인구수', y='총범죄건수', ax=axes[1], line_kws={'color': 'green'})
+for i, row in X_scaled_df.iterrows():
+    if row['총범죄건수'] > 3:
+        axes[1].text(
+            row['총생활인구수'], row['총범죄건수'],
+            '강남구',  # 표시할 텍스트
+            fontsize=12, color='red', ha='left', va='bottom'
+        )
+axes[1].grid(True)
+
+plt.tight_layout()
+plt.show()
+
+```
+
+- 
 
 
 
