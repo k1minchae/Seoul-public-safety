@@ -80,12 +80,12 @@ seoul_one_people_df = pd.read_excel('./data/seoul_one _person_housed_updated.xls
 sulzip_df = sulzip_df.iloc[:, [0, 3]]
 sulzip_df = sulzip_df.rename(columns={'총_개수' : '술집 수'})
 
-# cctv 데이터 수정
+# cctv 정리
 cctv_by_gu = Seoul_CCTV_df.groupby("자치구")["CCTV 수량"].sum().reset_index()
 cctv_by_gu.columns = ["자치구", "CCTV총수량"]
 cctv_by_gu
 
-# 총범죄건수, 총생활인구수, 범죄율, 구별 경찰수
+# 범죄 데이터 정리 - 총범죄건수, 총생활인구수, 범죄율, 구별 경찰수
 crime_rate_df = crime_rate_df.iloc[:, [0,1,5,6,7]]
 
 # 치안센터 정리
@@ -100,12 +100,17 @@ seoul_one_df = seoul_one_people_df.iloc[:, [0,1]]
 Seoul_bell_df = Seoul_bell_df.groupby("자치구")["설치목적"].count().reset_index()
 Seoul_bell_df = Seoul_bell_df.rename(columns={'설치목적' : '안전벨 수'})
 
-# 데이터 결합합
+# 데이터 결합
 merged_df = sulzip_df.merge(crime_rate_df, on="자치구") \
                .merge(Seoul_SafetyCener_df, on="자치구") \
                .merge(cctv_by_gu, on="자치구") \
                .merge(seoul_one_df, on="자치구")\
                .merge(Seoul_bell_df, on="자치구")
+
+merged_df.to_excel('./data/sanggwan_df.xlsx', index=False)
+
+merged_df= pd.read_excel('./data/sanggwan_df.xlsx')
+
 
 # 상관계수 
 corr_df = merged_df.drop(columns=["자치구"]).corr()
@@ -128,6 +133,7 @@ plt.show()
 # 술집 수와 범죄율 간에는 양의 상관관계(0.61)가 있습니다. 
 # 이는 술집이 많은 지역에서 범죄율이 높을 가능성이 있다는 것을 나타냅니다
 
-# 
+
+#############################################################################################################
 
 
