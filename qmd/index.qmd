@@ -611,9 +611,9 @@ plt.show()
 :::{.column width="40%"}
 <p style="margin-top:90px;">범죄건수 주요 변수</p>
 
+- 구별 경찰 수
 - 술집 수
 - 생활 인구 수
-- 구별 경찰 수
 - CCTV 총 수량
 - 1인가구수
 :::
@@ -819,9 +819,240 @@ plt.show()
 
 ```
 
-- 
 
 
+
+## {data-background-image="img/default-bg.png"}
+
+<h6 style="margin-top: 30px;">회귀분석(Stepwise: AIC)</h6>
+
+```{python}
+#|echo: true
+#|eval: true
+X1 = X_scaled_df[['총생활인구수', '구별 경찰수','안전벨 개수' ,'CCTV 수량', '총 음식점 수', '1인가구수','파출소수']]
+y = X_scaled_df['총범죄건수']
+
+lr = LinearRegression()
+names = X1.columns
+def aic_score(estimator,X1, y):
+    X1 = sm.add_constant(X1) 
+    model = sm.OLS(y, X1).fit()
+    return -model.aic
+
+# Perform SFS
+sfs = SFS(lr,
+          k_features=(1,7),   
+          forward=True,      
+          scoring=aic_score,  
+          cv=0)
+sfs.fit(X1, y)
+
+print('선택된 features:', np.array(names)[list(sfs.k_feature_idx_)])
+print("상관계수 feature: ['총 음식점 수','CCTV 수량','1인가구수','구별 경찰수','총생활인구수']")
+```
+
+- 상관계수 기준으로 선택한 변수와 80% 일치합니다.
+
+
+
+
+## {data-background-image="img/default-bg.png"}
+
+<h6 style="margin-top: 30px;">회귀분석(Stepwise: AIC)</h6>
+
+```{python}
+#|echo: true
+#|eval: true
+x1 = X_scaled_df[['총생활인구수', '구별 경찰수', 'CCTV 수량', '총 음식점 수', '파출소수']]
+x1 = sm.add_constant(x1)
+model1 = sm.OLS(y, x1).fit()
+print(model1.summary())
+
+```
+
+- 아까보다 Adj.R2 도 증가하고, AIC도 감소하고 있습니다.
+
+
+
+## {data-background-image="img/default-bg.png"}
+
+<h6 style="margin-top: 30px;">회귀분석(Stepwise: R2)</h6>
+
+```{python}
+#|eval: false
+#|echo: true
+X2 = X_scaled_df[['총생활인구수', '구별 경찰수','안전벨 개수' ,'CCTV 수량', '총 음식점 수', '1인가구수','파출소수']]
+y = X_scaled_df['총범죄건수']
+# Adj R2 스코어 함수 정의
+def adjusted_r2_score(estimator, X2, y):
+    y_pred = estimator.predict(X2)
+    n = X2.shape[0]
+    p = X2.shape[1]
+    r2 = r2_score(y, y_pred)
+    adjusted_r2 = 1 - (1 - r2) * (n - 1) / (n - p - 1)
+    return adjusted_r2
+
+
+sfs = SFS(lr,
+          k_features=(1,7),
+          forward=True,
+          scoring=adjusted_r2_score,
+          cv=0)
+
+sfs.fit(X2, y)
+
+
+selected_indices_r2 = list(sfs.k_feature_idx_)
+names_r2 = np.array(X2.columns)[:-1]
+
+x2 = X_scaled_df[['총생활인구수', '구별 경찰수', '안전벨 개수', 'CCTV 수량', '총 음식점 수', '1인가구수']]
+x2 = sm.add_constant(x2)
+model2 = sm.OLS(y, x2).fit()
+print(model2.summary())
+
+```
+
+- 마찬가지로, Stepwise 를 사용하여 R2 기준으로 모델을 생성했습니다.
+
+
+## {data-background-image="img/default-bg.png"}
+
+<h6 style="margin-top: 30px;">회귀분석(Stepwise: R2)</h6>
+
+```{python}
+#|eval: true
+#|echo: false
+X2 = X_scaled_df[['총생활인구수', '구별 경찰수','안전벨 개수' ,'CCTV 수량', '총 음식점 수', '1인가구수','파출소수']]
+y = X_scaled_df['총범죄건수']
+# Adj R2 스코어 함수 정의
+def adjusted_r2_score(estimator, X2, y):
+    y_pred = estimator.predict(X2)
+    n = X2.shape[0]
+    p = X2.shape[1]
+    r2 = r2_score(y, y_pred)
+    adjusted_r2 = 1 - (1 - r2) * (n - 1) / (n - p - 1)
+    return adjusted_r2
+
+
+sfs = SFS(lr,
+          k_features=(1,7),
+          forward=True,
+          scoring=adjusted_r2_score,
+          cv=0)
+
+sfs.fit(X2, y)
+
+
+selected_indices_r2 = list(sfs.k_feature_idx_)
+names_r2 = np.array(X2.columns)[:-1]
+
+x2 = X_scaled_df[['총생활인구수', '구별 경찰수', '안전벨 개수', 'CCTV 수량', '총 음식점 수', '1인가구수']]
+x2 = sm.add_constant(x2)
+model2 = sm.OLS(y, x2).fit()
+print(model2.summary())
+```
+
+```{python}
+#|echo: false
+#|eval: true
+print(f"모델 1의 AIC: {model1.aic:.3f}, 모델 1의 R2: {model1.rsquared:.3f}")
+print(f"모델 2의 AIC: {model2.aic:.3f}, 모델 2의 R2: {model2.rsquared:.3f}")
+print(f"모델 3의 AIC: {model3.aic:.3f}, 모델 3의 R2: {model3.rsquared:.3f}")
+```
+
+- 최종적으로 모델 1을 선택하기로 했습니다.
+
+
+
+## {data-background-image="img/default-bg.png"}
+
+<h6 style="margin-top: 30px;">최종 모델 검증</h6>
+
+```{python}
+#|echo: false
+#|eval: true
+residuals = model1.resid
+fitted_values = model1.fittedvalues
+plt.figure(figsize=(15,4))
+plt.subplot(1,2,1)
+plt.scatter(fitted_values, residuals)
+plt.axhline(y=0, color='black', linestyle='--')
+plt.subplot(1,2,2)
+stats.probplot(residuals, plot=plt)
+plt.show()
+```
+
+```{python}
+#|echo: true
+#|eval: true
+# 잔차정규성
+resid_stats, resid_pvalue = stats.shapiro(residuals)
+print(resid_pvalue)
+
+```
+
+- 유의수준 5% 기각 X (정규성 만족)
+
+
+## {data-background-image="img/default-bg.png"}
+
+<h6 style="margin-top: 30px;">최종 모델 검증</h6>
+
+
+
+## {data-background-image="img/default-bg.png"}
+
+<h6 style="margin-top: 30px;">최종 모델 검증</h6>
+
+```{python}
+#|echo: true
+#|eval: true
+#잔차 등분산성
+bptest = het_breuschpagan(model1.resid, model1.model.exog)
+print(f'BP-test statistics: {bptest[0]:.3f}')
+print(f'BP-test p_value: {bptest[1]:.3f}') 
+#p-value가 0.3으로 귀무가설 기각하지 못함
+#등분산성 만족한다고 볼 수 있음
+
+
+#잔차 독립성
+dw_stat = durbin_watson(model1.resid)
+print(f'DW test: {dw_stat:.3f}')  
+# 2 정도로 잔차 독립성 만족한다고 볼 수 있음
+```
+
+- 잔차의 등분산성과 독립성도 만족합니다.
+
+
+## {data-background-image="img/default-bg.png"}
+
+<h6 style="margin-top: 30px;">최종 모델 해석</h6>
+
+```{python}
+#|echo: false
+#|eval: true
+x1 = X_scaled_df[['총생활인구수', '구별 경찰수', 'CCTV 수량', '총 음식점 수', '파출소수']]
+x1 = sm.add_constant(x1)
+model1 = sm.OLS(y, x1).fit()
+print(model1.summary())
+
+```
+
+- 선형회귀모델이 통계적으로 유의함을 알 수 있습니다.
+- 또한, CCTV수량을 제외한 변수들은 전부 유의합니다.
+
+
+## {data-background-image="img/default-bg.png"}
+
+<img src="img/cctv-news.png" style="margin-top: 30px; width: 50%;"/>
+
+:::{.fragment}
+<img src="img/ppp.png" style="    position: absolute;
+    top: 100px;
+    right: 1px;
+    width: 35%; "/>
+
+:::
 
 
 ---
@@ -886,20 +1117,6 @@ plt.show()
 
 
 
-
-
----
-
-## {data-background-image="img/default-bg.png"}
-
-<div style="width:100%;">
-  <img src="img/cctv-news.png" style="margin-top: 30px; width: 50%;"/>
-
-  <p style="text-align: center;">하지만 분석 결과는...?</p>
-
-  <img src="img/yellow.png" style="margin-top: 30px; position:absolute; bottom:0px; margin-top: 30px; position:absolute; bottom: 0px; right: 0px; width: 40%;"/>
-
-</div>
 
 --- 
 
