@@ -110,6 +110,7 @@ def aic_score(estimator,X1, y):
     model = sm.OLS(y, X1).fit()
     print("Model AIC:", model.aic)
     return -model.aic
+
 # Perform SFS
 sfs = SFS(lr,
           k_features=(1,7),   
@@ -146,8 +147,7 @@ sfs = SFS(lr,
           k_features=(1,7),
           forward=True,
           scoring=adjusted_r2_score,
-          cv=0,
-          verbose = 2)
+          cv=0)
 
 sfs.fit(X2, y)
 
@@ -162,9 +162,10 @@ print(model2.summary())
 
 
 
-model1.aic
-model2.aic
-model3.aic
+print(f"모델 1의 AIC: {model1.aic:.3f}, 모델 1의 R2: {model1.rsquared:.3f}")
+print(f"모델 2의 AIC: {model2.aic:.3f}, 모델 2의 R2: {model2.rsquared:.3f}")
+print(f"모델 3의 AIC: {model3.aic:.3f}, 모델 3의 R2: {model3.rsquared:.3f}")
+
 
 #최종 선정 모델
 print(model1.summary())
