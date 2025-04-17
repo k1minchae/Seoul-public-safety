@@ -292,3 +292,8 @@ stat1, p1 = stats.shapiro(second_2['총범죄건수'])
 print(f'클러스터 0 정규성 p값: {p0:.4f}')
 print(f'클러스터 1 정규성 p값: {p1:.4f}')
 
+
+
+import random
+random.seed(225418)
+random.sample(range(1, 8), 7)
