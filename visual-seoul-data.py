@@ -327,6 +327,30 @@ master.select_dtypes('number').corr()['치안센터수']['술집 수']
 # 다른 변수들과 비교했을 때 두번째로 높은 상관관계
 # 치안을 위해 술집 수가 많을 수록 치안센터를 늘리는 경향이 있음.
 
+# 자치구별 집계
+police_sum = master.groupby('자치구')['구별 경찰수'].sum()
+center_sum = master.groupby('자치구')['치안센터수'].sum()
+
+# 하나의 데이터프레임으로 병합
+df_plot = pd.DataFrame({
+    '구별 경찰수': police_sum,
+    '치안센터수': center_sum
+}).reset_index()
+
+# 시각화
+plt.figure(figsize=(8, 3))
+plt.plot(df_plot['자치구'], df_plot['구별 경찰수'], marker='o', label='구별 경찰수')
+plt.plot(df_plot['자치구'], df_plot['치안센터수'] * 100, marker='s', linestyle='--', label='치안센터수 (x100)')  # 스케일 맞춤
+
+plt.title('자치구별 경찰수 vs 치안센터수')
+plt.xlabel('자치구')
+plt.ylabel('경찰/치안센터 수')
+plt.xticks(rotation=45)
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
 
 # 비모수 2검정
 from scipy.stats import mannwhitneyu
