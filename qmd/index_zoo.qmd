@@ -719,7 +719,7 @@ plt.show()
 }
 </style>
 
-<p>군집 개수를 2개로 정하고 군집 분석을 수행했습니다.</p>
+<p>군집 개수를 2개로 설정</p>
 
 <div class="center">
 ```{python}
@@ -869,6 +869,48 @@ print(group1_2)
 ```
 
 
+
+
+---
+
+## {data-background-image="img/default-bg.png" }
+<h6> 군집 분석으로 알 수 있는 것 </h6>
+
+
+
+| <span style="font-size:26px;">군집</span> | <span style="font-size:26px;">총경찰수</span> | <span style="font-size:26px;">파출소수</span> | <span style="font-size:26px;">음식점수</span> | <span style="font-size:26px;">총인구수</span> | <span style="font-size:26px;">총범죄수</span> |
+|----------|--------------|----------------|------------------|-----------|------------|
+| 1 | 1058.38 | 7468.25 | 464,404.93 | 12.38 | 9337.38 |
+| 2 | 734.65 | 3824.71 | 377,246.14 | 8.41 | 5867.06 |
+
+
+
+<!-- 범죄 건수와 상관계수가 높은 변수들로 군집 분석을 수행했다.  -->
+
+<section>
+  <h6 style="font-size: 40px !important; margin-top:35px;">그룹 1 분석</h6>
+  <ul>
+    <li style="font-size: 32px !important;">복잡하고 밀도 높음</li>
+    <li style="font-size: 32px !important;">인구가 많고 상권이 큼</li>
+    <li style="font-size: 32px !important;">경찰과 파출소 수도 많아 치안 자원이 이미 많이 투입된 상태</li>
+    <li style="font-size: 32px !important;">그럼에도,  <strong>범죄 건수가 높다</strong>.</li>
+  </ul>
+</section>
+
+<section>
+  <h6 style="font-size: 40px !important; margin-top:35px;">그룹 2 분석</h6>
+  <ul>
+    <li style="font-size: 32px !important;">그룹 1보다 평균적으로 수치가 낮다.</li>
+    <li style="font-size: 32px !important;">도시 외곽 또는 상대적으로 조용한 주거 지역</li>
+    <li style="font-size: 32px !important;">인구도 적고 음식점도 적으며, 경찰/파출소 수도 적다.</li>
+    <li style="font-size: 32px !important;">그에 따라, <strong>범죄 건수도 낮다</strong>.</li>
+  </ul>
+</section>
+
+<!-- <p><em>→ 군집 간 범죄 건수의 차이가 뚜렷해 <strong>군집 분석 결과가 유효한 것으로 보인다</strong>.</em></p> -->
+
+
+
 ---
 
 ## {data-background-image="img/default-bg.png" }
@@ -903,49 +945,11 @@ plt.show()
 <p> 군집간 총 범죄건수의 평균에 차이가 있다.</p>
 
 
----
-
-## {data-background-image="img/default-bg.png" }
-<h6> 군집 분석으로 알 수 있는 것 </h6>
-
-
-| 클러스터 | 구별 경찰수 | 총 음식점 수 | 총생활인구수 | 파출소수 | 총범죄건수 |
-|----------|--------------|----------------|------------------|-----------|------------|
-| 1 | 1058.38 | 7468.25 | 464,404.93 | 12.38 | 9337.38 |
-| 2 | 734.65 | 3824.71 | 377,246.14 | 8.41 | 5867.06 |
-
-
-<!-- 범죄 건수와 상관계수가 높은 변수들로 군집 분석을 수행했다.  -->
-
-<section>
-  <h6>클러스터 1 분석</h6>
-  <ul>
-    <li>복잡하고 밀도 높은 지역일 가능성이 크다.</li>
-    <li>인구가 많고 상권이 크며 유동인구도 많고 외부 유입도 활발하다.</li>
-    <li>경찰과 파출소 수도 많아 치안 자원이 이미 많이 투입된 상태다.</li>
-    <li>그럼에도 불구하고 <strong>범죄 건수가 높다</strong>.</li>
-  </ul>
-</section>
-
-<section>
-  <h6>클러스터 2 분석</h6>
-  <ul>
-    <li>클러스터 1보다 평균적으로 수치가 낮다.</li>
-    <li>도시 외곽 또는 상대적으로 조용한 주거 지역일 가능성이 있다.</li>
-    <li>인구도 적고 음식점도 적으며, 경찰/파출소 수도 적다.</li>
-    <li>그에 따라 <strong>범죄 건수도 낮다</strong>.</li>
-  </ul>
-</section>
-
-<!-- <p><em>→ 군집 간 범죄 건수의 차이가 뚜렷해 <strong>군집 분석 결과가 유효한 것으로 보인다</strong>.</em></p> -->
-
-
-
-
-
 
 ---
 
 
 
 ## {data-background-image="img/final-bg.png"}
+
+- 우리발표를 전체적으로 요약해서 마무리하고싶은데
