@@ -1,5 +1,5 @@
 ---
-title: "제목입니다."
+title: "서울시 치안데이터 분석"
 # subtitle: "부제목입니다."
 # author: "2조"
 format: 
@@ -11,7 +11,7 @@ format:
     # logo: logo.png
     css: styles.css
     title-slide-attributes: 
-      data-background-image: "img/title.png"
+      data-background-image: "img/title-bg.png"
       data-background-size: cover
     slide-attributes:
       # data-background-image: "assets/bg.png"
@@ -19,7 +19,93 @@ format:
 jupyter: python3
 ---
 
+
+## {data-background-image="img/default-bg.png"}
+<div style="width: 100%; display: flex; justify-content: center; flex-direction: column;">
+<img src="img/toast.png" style="display: block; margin: 30px auto; width: 70%; margin-top:10px;"/>
+
+<p style="display: block; margin: 0 auto;">드디어 이삭 강사님이 서울로 이사를 가기로 했습니다!</p>
+
+</div>
+
+
+
+
+---
+
 ## {data-background-image="img/list-bg.png"}
+
+
+
+---
+
+## {data-background-image="img/data-bg.png"}
+
+
+
+
+---
+
+## {data-background-image="img/default-bg.png"}
+
+:::::{.columns}
+
+:::{.column width="60%"}
+상관계수 분석
+```{python}
+#|echo: false
+#|eval: true
+import pandas as pd
+import matplotlib.pyplot as plt
+merged_df= pd.read_excel('../data/sanggwan_df.xlsx')
+plt.rcParams['font.family'] = 'Malgun Gothic'
+plt.rcParams['axes.unicode_minus'] = False
+
+# 상관계수 
+corr_df = merged_df.drop(columns=["자치구"]).corr()
+corr_df 
+
+# 히트맵
+import seaborn as sns
+plt.rcParams['font.family'] ='Malgun Gothic'
+plt.rcParams['axes.unicode_minus'] =False
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(corr_df, annot=True, cmap="coolwarm", fmt=".2f")
+plt.title("서울시 자치구별 변수 간 상관관계")
+plt.xticks(rotation=45)  
+plt.tight_layout()
+plt.show()
+
+```
+:::
+
+:::{.column width="40%"}
+<p style="margin-top:90px;">범죄건수 주요 변수</p>
+
+- 술집 수
+- 생활 인구 수
+- 구별 경찰 수
+- CCTV 총 수량
+- 1인가구수
+:::
+:::::
+
+
+
+
+---
+
+## {data-background-image="img/default-bg.png"}
+<div>
+<p style="position:absolute; top:0px;"></p>
+<p style="margin-top:300px; margin-left:300px; font-size: 56px;">"CCTV가 많으면 범죄율을 <br/> 낮추는 데에 도움이 될까요?"</p>
+
+<img src = "img/police.png"
+  style="position: absolute; top: 100px; left:-80px; width: 300px;"
+/>
+</div>
+
 
 
 
@@ -30,8 +116,22 @@ jupyter: python3
 
 ## {data-background-image="img/default-bg.png"}
 
-<p style="margin-top:10px;">CCTV가 많으면 범죄율을
-<br/>도움이 될까요?</p>
-<img src = "img/police.png"
-  style="position: absolute; top: 100px; left:-80px;"
-/>
+<div style="width:100%;">
+  <img src="img/cctv-news.png" style="margin-top: 30px; width: 50%;"/>
+
+  <p style="text-align: center;">하지만 분석 결과는...?</p>
+
+  <img src="img/yellow.png" style="margin-top: 30px; position:absolute; bottom:0px; margin-top: 30px; position:absolute; bottom: 0px; right: 0px; width: 40%;"/>
+
+</div>
+
+--- 
+
+## {data-background-image="img/result-bg.png"}
+
+
+
+
+---
+
+## {data-background-image="img/final-bg.png"}
