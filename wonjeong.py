@@ -288,6 +288,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.linear_model import LinearRegression
 import statsmodels.api as sm
+from sklearn.metrics import r2_score
+from mlxtend.feature_selection import SequentialFeatureSelector as SFS
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
 food_and_entertain = pd.read_csv('./data/머지한유흥업소데이터.csv', encoding='utf-8')
 seoul_safetybell = pd.read_excel('./data/Seoul_Safetybell.xlsx', engine='openpyxl')
@@ -324,3 +328,313 @@ y = df['범죄율']
 X = sm.add_constant(X)
 model = sm.OLS(y, X).fit()
 print(model.summary())
+
+
+X = df[['총_개수','CCTV 수량','안전벨 개수']]
+y = df['범죄율']
+X = sm.add_constant(X)
+model = sm.OLS(y, X).fit()
+print(model.summary())
+
+
+
+
+
+
+
+
+
+X = df[['총_개수','CCTV 수량','안전벨 개수']]
+y = df['범죄율']
+
+
+
+
+
+#scaler 꼭 해야함? 
+
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+X_scaled.shape
+# AIC 계산 함수
+def calculate_aic(model, X, y):
+    n = len(y)  # 데이터 샘플 수
+    k = X.shape[1]  # 모델 파라미터 수 (특성 개수)
+    model.fit(X, y) # 모델 학습
+    y_pred = model.predict(X)   # 예측값과 실제값의 잔차
+    residual_sum_of_squares = np.sum((y - y_pred) ** 2)
+    aic = n * np.log(residual_sum_of_squares / n) + 2 * k  # AIC 계산
+    return aic
+
+lr = LinearRegression()
+
+# 순차적 특성 선택 (SFS)
+sfs = SFS(lr, 
+          k_features=(1, 3),        
+          forward=True,               # 특성을 하나씩 추가하면서 선택
+          scoring='r2',  
+          cv=0,                       # 교차 검증 사용 안 함
+          verbose=2)
+
+# 특성 선택 학습
+sfs.fit(X_scaled, y)
+
+# 선택된 특성들 (각 특성 조합에 대해 AIC 계산)
+aic_values = []  # AIC 값을 저장할 리스트
+
+# 선택된 특성 조합을 하나씩 확인하고 AIC 계산
+for i in range(1, len(sfs.k_feature_idx_) + 1):
+    selected_features = np.array(X.columns)[list(sfs.k_feature_idx_[:i])]
+    X_selected = X_scaled[:, sfs.k_feature_idx_[:i]]  # 선택된 특성만 사용
+    aic_value = calculate_aic(lr, X_selected, y)
+    aic_values.append((selected_features, aic_value))
+
+# AIC 값이 가장 작은 모델 찾기
+best_model = min(aic_values, key=lambda x: x[1])
+
+print(f"선택된 특성들: {best_model[0]}")
+best_model[0].size
+print(f"최적 모델의 AIC: {best_model[1]}")
+
+
+
+
+############################################################
+#필요한 라이브러리 부르기
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.linear_model import LinearRegression
+import statsmodels.api as sm
+from sklearn.metrics import r2_score
+from mlxtend.feature_selection import SequentialFeatureSelector as SFS
+from sklearn.preprocessing import StandardScaler
+
+
+food_and_entertain = pd.read_csv('./data/머지한유흥업소데이터.csv', encoding='utf-8')
+seoul_safetybell = pd.read_excel('./data/Seoul_Safetybell.xlsx', engine='openpyxl')
+cctv = pd.read_csv('./data/Seoul_CCTV_info.csv',encoding='cp949')
+crime_rate = pd.read_csv('./data/crime_rate.csv',encoding='euc-kr',sep='\t')
+one_housed = pd.read_excel('./data/seoul_one_person_housed_updated.xlsx')
+SeoulSafetyCenter = pd.read_excel('./data/Seoul_SafetyCener_info.xlsx')
+
+#안전벨 개수
+seoul_safetybell_df = seoul_safetybell.groupby('자치구')['번호'].count()
+#cctv 개수
+cctv_df = cctv.groupby('자치구')['CCTV 수량'].sum()
+
+#  1인가구 수
+one_housed_clean = one_housed.rename(columns={'서울시 1인가구수': '자치구', '계': '1인가구수'})
+one_housed_clean = one_housed_clean[['자치구', '1인가구수']]
+
+#  파출소 개수
+station_counts = SeoulSafetyCenter['자치구'].value_counts().reset_index()
+station_counts.columns = ['자치구', '파출소수']
+
+
+df = crime_rate.merge(seoul_safetybell_df, on='자치구') \
+                       .merge(cctv_df, on='자치구') \
+                       .merge(food_and_entertain, on='자치구') \
+                       .merge(one_housed_clean, on='자치구') \
+                       .merge(station_counts, on='자치구')
+df = df.rename(columns={'번호': '안전벨 개수','총_개수': '총 음식점 수'})
+df = df.drop(columns=['Unnamed: 8','일반음식점_개수','유흥업소_개수','자치구코드'])
+
+df
+
+
+#aic 기준 변수 선택
+
+X1 = df[['총생활인구수', '구별 경찰수','안전벨 개수' ,'CCTV 수량', '총 음식점 수', '1인가구수','파출소수']]
+y = df['범죄율']
+
+lr = LinearRegression()
+names = X1.columns
+def aic_score(estimator,X1, y):
+    X1 = sm.add_constant(X1) 
+    model = sm.OLS(y, X1).fit()
+    print("Model AIC:", model.aic)
+    return -model.aic
+# Perform SFS
+sfs = SFS(lr,
+          k_features=(1,7),   
+          forward=True,      
+          scoring=aic_score,  
+          cv=0,
+          verbose = 0)
+sfs.fit(X1, y)
+
+print('Selected features:', np.array(names)[list(sfs.k_feature_idx_)])
+
+
+x1 = df[['총생활인구수', '구별 경찰수', '총 음식점 수', '파출소수']]
+x1 = sm.add_constant(x1)
+model1 = sm.OLS(y, x1).fit()
+print(model1.summary())
+
+
+
+
+
+#adj-r2 기준 변수 선택
+X2 = df[['총생활인구수', '구별 경찰수','안전벨 개수' ,'CCTV 수량', '총 음식점 수', '1인가구수','파출소수']]
+y = df['범죄율']
+# Adj R2 스코어 함수 정의
+def adjusted_r2_score(estimator, X2, y):
+    y_pred = estimator.predict(X2)
+    n = X2.shape[0]
+    p = X2.shape[1]
+    r2 = r2_score(y, y_pred)
+    adjusted_r2 = 1 - (1 - r2) * (n - 1) / (n - p - 1)
+    return adjusted_r2
+
+
+sfs = SFS(lr,
+          k_features=(1,7),
+          forward=True,
+          scoring=adjusted_r2_score,
+          cv=0,
+          verbose = 2)
+
+sfs.fit(X2, y)
+
+
+selected_indices_r2 = list(sfs.k_feature_idx_)
+names_r2 = np.array(X2.columns)[:-1]
+#print('Selected features:', np.array(names_r2)[selected_indices_r2])
+
+x2 = df[['총생활인구수', '구별 경찰수', '안전벨 개수', 'CCTV 수량', '총 음식점 수', '1인가구수']]
+x2 = sm.add_constant(x2)
+model2 = sm.OLS(y, x2).fit()
+print(model2.summary())
+
+
+#우리가 생각하기에 범죄율에 영향을 미친다고 생각하는 변수들들
+X3 = df[['총 음식점 수','CCTV 수량','1인가구수','파출소수']]
+y = df['범죄율']
+X3 = sm.add_constant(X3)
+model3 = sm.OLS(y, X3).fit()
+print(model3.summary())
+
+
+#회귀 아노바 수행 못함-> nested model이 아니어서
+
+#수정된 r2 (단일 모델에선 이게 더 나음음)
+model1.rsquared_adj
+model2.rsquared_adj
+model3.rsquared_adj
+
+#aic 비교 (작을수록 좋음) 모델 간 비교
+model1.aic
+model2.aic
+model3.aic
+
+
+#p_values
+model1.pvalues
+model2.pvalues
+model3.pvalues
+
+#회귀계수
+model1.params
+model2.params
+model3.params
+
+
+# 잔차 정규성, 등분산성
+
+
+
+
+print(model1.model.exog_names)
+print(model3.model.exog_names)
+df.select_dtypes('number').corr()
+
+
+
+
+
+#보지마마
+#다중공선성 볼거?
+
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+# VIF 계산 (const 제외)
+X_no_const = x.drop(columns='const')
+vif_data = pd.DataFrame()
+vif_data["feature"] = X_no_const.columns
+vif_data["VIF"] = [variance_inflation_factor(X_no_const.values, i) for i in range(X_no_const.shape[1])]
+print(vif_data)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#scaler 꼭 해야함? 구별 경찰수
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+X_scaled.shape
+
+
+
+# AIC계산 함수
+def calculate_aic(model, X, y):
+    n = len(y)  # 데이터 샘플 수
+    k = X.shape[1]  # 모델 파라미터 수 (특성 개수)
+    model.fit(X, y) # 모델 학습
+    y_pred = model.predict(X)   # 예측값과 실제값의 잔차
+    residual_sum_of_squares = np.sum((y - y_pred) ** 2)
+    aic = n * np.log(residual_sum_of_squares / n) + 2 * k  # AIC 계산
+    return aic
+
+lr = LinearRegression()
+
+sfs = SFS(lr, 
+          k_features=(1, 3),        
+          forward=True,               # 특성을 하나씩 추가하면서 선택
+          scoring='r2',  
+          cv=0,                       # 교차 검증 사용 안 함
+          verbose=2)
+
+# 특성 선택 학습
+sfs.fit(X_scaled, y)
+
+# 선택된 특성들 (각 특성 조합에 대해 AIC 계산)
+aic_values = []  # AIC 값을 저장할 리스트
+
+# 선택된 특성 조합을 하나씩 확인하고 AIC 계산
+for i in range(1, len(sfs.k_feature_idx_) + 1):
+    selected_features = np.array(X.columns)[list(sfs.k_feature_idx_[:i])]
+    X_selected = X_scaled[:, sfs.k_feature_idx_[:i]]  # 선택된 특성만 사용
+    aic_value = calculate_aic(lr, X_selected, y)
+    aic_values.append((selected_features, aic_value))
+
+# AIC 값이 가장 작은 모델 찾기
+best_model = min(aic_values, key=lambda x: x[1])
+
+print(f"선택된 특성들: {best_model[0]}")
+best_model[0].size
+print(f"최적 모델의 AIC: {best_model[1]}")
+
+
+x = df[['총생활인구수', '구별 경찰수', '총 음식점 수']]
+x = sm.add_constant(x)
+model = sm.OLS(y, x).fit()
+print(model.summary())
+
+
+
+
+
+########################################################################
